@@ -11,7 +11,7 @@
 // To rotate: delete the old key at z.ai, generate a new one, replace glmApiKey,
 // commit, and push. Done.
 window.ROAMLY_CONFIG = {
-  glmApiKey: 'PASTE-YOUR-THROWAWAY-ZAI-KEY-HERE',
+  glmApiKey: '3c1901bbc1054cdd903185e5ad5ee62d.JBRKybarxlENjgva',
   glmModel: 'glm-5v-turbo',
   glmEndpoint: 'https://api.z.ai/api/paas/v4/chat/completions'
 };
