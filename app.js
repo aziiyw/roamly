@@ -19,6 +19,15 @@ const data = {
 let state = { screen: 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '' };
 const app = document.querySelector('#app');
 
+// DEBUG: surface any uncaught errors visibly on the page so we can see them
+// without the browser console. Remove this block once issues are resolved.
+window.addEventListener('error', (e) => {
+  const dbg = document.createElement('div');
+  dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#c00;color:#fff;font:12px monospace;padding:8px;z-index:99999;white-space:pre-wrap;';
+  dbg.textContent = 'JS ERROR: ' + (e.error?.stack || e.message);
+  document.body.appendChild(dbg);
+});
+
 // System prompt + GLM request shape, mirrored from api/analyze.js so the
 // client-side call behaves identically to the old serverless function.
 const ANALYZE_SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
@@ -152,7 +161,15 @@ function trip() { return shell(`<section class="page trip-page"><div class="trip
 
 function quiz() { return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-steps"><i></i><i class="active"></i><i></i><span>1 of 3</span></div><div class="quiz-flower">✦</div><p class="eyebrow">A TINY HELLO AGAIN</p><h1>Do you remember<br>what this means?</h1><div class="quiz-word">入口<span>iriguchi</span></div>${state.quizAnswered ? `<div class="answer-reveal"><b>Entrance</b><p>Exactly — you first met this word at Nishiki Market.</p></div>` : `<div class="answer-options"><button data-action="answer">Entrance</button><button data-action="answer">Exit</button><button data-action="answer">Platform</button></div>`}<p class="quiz-note">No pressure. Getting it wrong is how it starts to stick.</p></section>`, 'home'); }
 
-function render() { const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz }; views[state.screen](); }
+function render() {
+  try {
+    const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+    views[state.screen]();
+  } catch (err) {
+    // DEBUG: show the error on the page so we can diagnose without the console
+    app.innerHTML = `<section style="padding:40px;font-family:monospace;font-size:13px;color:#c00;"><h2>Render error (screen: ${state.screen})</h2><pre>${(err && err.stack) || err}</pre></section>`;
+  }
+}
 window.chooseTravelMode = (mode) => { state.mode = mode; state.screen = 'scan'; render(); };
 function uploadTravelImage(input, mode) {
   const image = input.files?.[0];
