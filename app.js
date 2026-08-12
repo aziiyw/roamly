@@ -20,6 +20,14 @@ function todayKey(offsetDays = 0) {
   d.setDate(d.getDate() + offsetDays);
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
+// Human-readable today for the dashboard greeting, e.g. "FRIDAY, MARCH 28".
+function formatToday(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][d.getDay()]
+    + ', ' + ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'][d.getMonth()]
+    + ' ' + d.getDate();
+}
 function saveProgress() {
   try {
     localStorage.setItem('roamly_progress', JSON.stringify({
@@ -497,7 +505,7 @@ function dashboard() {
  const { wordsMet, scans, recall } = computeStats();
  const streak = data.streakDays || 0;
  const streakUnit = streak === 1 ? 'day' : 'days';
- return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">FRIDAY, MARCH 28</p><h1>Ohayō, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak" title="${streak}-day streak"><b>${streak}</b><span>${streakUnit}<br>streak</span></div></div>
+ return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">${formatToday()}</p><h1>Ohayō, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak" title="${streak}-day streak"><b>${streak}</b><span>${streakUnit}<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
  <div class="stats-grid"><div><strong>${wordsMet}</strong><span>words met</span></div><div><strong>${scans}</strong><span>scans made</span></div><div><strong>${recall}<small>%</small></strong><span>remembered</span></div></div>
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
