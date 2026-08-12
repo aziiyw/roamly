@@ -58,38 +58,65 @@ async function analyzeImageClientSide(dataUrl) {
 }
 
 // Robustly parse the JSON object out of GLM's response. GLM often wraps output
-// in ```json fences and sometimes emits raw control characters (literal
-// newlines, tabs) inside string values that make JSON.parse throw. This
-// extracts the {...} block, strips fences, escapes control characters, and
-// falls back to brace-matching extraction if strict parse still fails.
+// in ```json fences, sometimes emits raw control characters inside strings, and
+// occasionally produces malformed JSON (e.g. {"x":115,135,485,935} for box
+// coordinates). This tries strict parse first, then repairs common issues,
+// then falls back to regex field extraction so we always return something.
 function parseGLMJson(content) {
   if (!content || typeof content !== 'string') {
     throw new Error('The AI returned an empty response. Please try another photo.');
   }
-  // 1. Strip ```json ... ``` fences if present (also handles inline ones)
+  // 1. Strip ```json fences and extract the outermost { ... } block
   let text = content.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-  // 2. If there's surrounding prose, pull out the outermost { ... } block
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     text = text.slice(firstBrace, lastBrace + 1);
   }
-  // 3. Try parsing as-is first
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    // 4. Fix raw control characters inside string values: GLM sometimes puts
-    //    literal \n / \r / \t bytes inside JSON strings (illegal in JSON).
-    //    Escape them so JSON.parse accepts the string.
-    const escaped = text.replace(/("(?:\\.|[^"\\])*")/g, (match) =>
-      match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
-    );
-    try {
-      return JSON.parse(escaped);
-    } catch (e2) {
-      throw new Error('Could not read the AI response. Please try a clearer photo.');
-    }
+  // 2. Try strict parse
+  try { return JSON.parse(text); } catch (e) { /* continue to repairs */ }
+  // 3. Escape raw control characters inside string values
+  const escaped = text.replace(/("(?:\\.|[^"\\])*")/g, (m) =>
+    m.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t'));
+  try { return JSON.parse(escaped); } catch (e) { /* continue to repairs */ }
+  // 4. Fix malformed box objects: GLM sometimes writes {"x":115,135,485,935}
+  //    instead of {"x":115,"y":135,"width":485,"height":935}. Detect the
+  //    pattern "box":{"x":<num>,<num>,<num>,<num>} and rewrite it.
+  const boxFixed = escaped.replace(
+    /"box"\s*:\s*\{\s*"x"\s*:\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}/g,
+    '"box":{"x":$1,"y":$2,"width":$3,"height":$4}');
+  try { return JSON.parse(boxFixed); } catch (e) { /* continue to fallback */ }
+  // 5. Last resort: extract fields individually with regex so the user still
+  //    gets a result even if the JSON is unrecoverably broken.
+  return extractFieldsFallback(boxFixed);
+}
+
+// Regex-based fallback that pulls the top-level fields out of a broken JSON
+// string. Vocabulary items are extracted individually so one bad entry doesn't
+// discard the rest.
+function extractFieldsFallback(text) {
+  const getStr = (key) => {
+    const m = text.match(new RegExp('"' + key + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));
+    return m ? m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+  };
+  const vocabMatches = [...text.matchAll(/"word"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"reading"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"meaning"\s*:\s*"((?:[^"\\]|\\.)*)"(?:[\s\S]*?"category"\s*:\s*"([^"]*)")?/g)];
+  const vocabulary = vocabMatches.map(m => ({
+    word: (m[1] || '').replace(/\\"/g, '"'),
+    reading: (m[2] || '').replace(/\\"/g, '"'),
+    meaning: (m[3] || '').replace(/\\"/g, '"'),
+    category: m[4] || 'Signs'
+  }));
+  const result = {
+    detectedText: getStr('detectedText'),
+    translation: getStr('translation'),
+    romanisation: getStr('romanisation'),
+    naturalNote: getStr('naturalNote'),
+    vocabulary
+  };
+  if (!result.translation && vocabulary.length === 0) {
+    throw new Error('Could not read the AI response. Please try a clearer photo.');
   }
+  return result;
 }
 const button = (label, cls = '', action = '') => `<button class="${cls}" data-action="${action}">${label}</button>`;
 const icon = (name) => icons[name] || '';
