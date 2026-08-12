@@ -1,26 +1,44 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Proof</title>
 <style>
-  body { margin: 0; padding: 0; }
-  #app { width: 400px; margin: 0 auto; border: 1px solid #ccc; min-height: 600px; }
+  body { margin: 0; padding: 0; font-family: sans-serif; }
   #controls { padding: 20px; text-align: center; background: #f0f0f0; }
   button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+  #console-log { background: #111; color: #0f0; font: 11px monospace; padding: 12px; max-height: 200px; overflow: auto; white-space: pre-wrap; }
+  #app { width: 400px; margin: 0 auto; border: 1px solid #ccc; min-height: 400px; }
 </style>
 </head>
 <body>
 <div id="controls">
   <button id="run">Upload screenshot & scan</button>
 </div>
+<div id="console-log"></div>
 <div id="app"></div>
+<script>
+// Intercept console.log to show on screen
+const logEl = document.getElementById('console-log');
+const origLog = console.log.bind(console);
+console.log = function(...args) {
+  origLog(...args);
+  logEl.textContent += args.join(' ') + '\n';
+  logEl.scrollTop = logEl.scrollHeight;
+};
+</script>
 <script src="config.js?v=8"></script>
 <script src="app.js?v=8"></script>
 <script>
 document.getElementById('run').addEventListener('click', async () => {
+  console.log('Button clicked, fetching image...');
   const resp = await fetch('proof.png');
+  console.log('Fetch response:', resp.status, resp.ok);
   const blob = await resp.blob();
+  console.log('Blob:', blob.size, 'bytes', blob.type);
   const file = new File([blob], 'proof.png', { type: 'image/png' });
+  console.log('File created:', file.name, file.size);
   const fakeInput = { files: [file], dataset: { uploadMode: 'learn' } };
+  console.log('Calling uploadTravelImage...');
   uploadTravelImage(fakeInput, 'learn');
+  console.log('uploadTravelImage returned (async work continues)');
 });
 </script>
 </body>
