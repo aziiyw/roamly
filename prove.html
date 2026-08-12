@@ -3,42 +3,90 @@
 <style>
   body { margin: 0; padding: 0; font-family: sans-serif; }
   #controls { padding: 20px; text-align: center; background: #f0f0f0; }
-  button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
-  #console-log { background: #111; color: #0f0; font: 11px monospace; padding: 12px; max-height: 200px; overflow: auto; white-space: pre-wrap; }
-  #app { width: 400px; margin: 0 auto; border: 1px solid #ccc; min-height: 400px; }
+  button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 4px; }
+  #diag { background: #111; color: #0f0; font: 12px monospace; padding: 12px; white-space: pre-wrap; min-height: 200px; }
+  #app { width: 400px; margin: 0 auto; border: 1px solid #ccc; min-height: 200px; }
 </style>
 </head>
 <body>
 <div id="controls">
-  <button id="run">Upload screenshot & scan</button>
+  <button id="test1">Test 1: Direct GLM call (skip FileReader)</button>
+  <button id="test2">Test 2: Real upload flow (with FileReader)</button>
 </div>
-<div id="console-log"></div>
+<div id="diag">Click a test button...</div>
 <div id="app"></div>
 <script>
-// Intercept console.log to show on screen
-const logEl = document.getElementById('console-log');
-const origLog = console.log.bind(console);
-console.log = function(...args) {
-  origLog(...args);
-  logEl.textContent += args.join(' ') + '\n';
-  logEl.scrollTop = logEl.scrollHeight;
-};
+const diag = document.getElementById('diag');
+function log(msg) {
+  diag.textContent += msg + '\n';
+  diag.scrollTop = diag.scrollHeight;
+  console.log(msg);
+}
+// Make log available globally
+window._log = log;
 </script>
 <script src="config.js?v=8"></script>
 <script src="app.js?v=8"></script>
 <script>
-document.getElementById('run').addEventListener('click', async () => {
-  console.log('Button clicked, fetching image...');
-  const resp = await fetch('proof.png');
-  console.log('Fetch response:', resp.status, resp.ok);
-  const blob = await resp.blob();
-  console.log('Blob:', blob.size, 'bytes', blob.type);
-  const file = new File([blob], 'proof.png', { type: 'image/png' });
-  console.log('File created:', file.name, file.size);
-  const fakeInput = { files: [file], dataset: { uploadMode: 'learn' } };
-  console.log('Calling uploadTravelImage...');
-  uploadTravelImage(fakeInput, 'learn');
-  console.log('uploadTravelImage returned (async work continues)');
+// TEST 1: Fetch image, convert to data URL manually, call GLM directly
+document.getElementById('test1').addEventListener('click', async () => {
+  diag.textContent = '=== TEST 1: Direct GLM call ===\n';
+  try {
+    log('1. Fetching proof.png...');
+    const resp = await fetch('proof.png');
+    log('   fetch status: ' + resp.status);
+    const blob = await resp.blob();
+    log('   blob: ' + blob.size + ' bytes');
+
+    log('2. Converting to data URL with FileReader...');
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => { log('   FileReader.onload fired!'); resolve(r.result); };
+      r.onerror = (e) => { log('   FileReader ERROR!'); reject(e); };
+      r.readAsDataURL(blob);
+    });
+    log('   data URL length: ' + dataUrl.length);
+
+    log('3. Calling analyzeImageClientSide directly...');
+    const start = Date.now();
+    const result = await analyzeImageClientSide(dataUrl);
+    log('   ✅ SUCCESS in ' + ((Date.now()-start)/1000).toFixed(1) + 's');
+    log('   translation: ' + result.translation);
+    log('   vocab: ' + (result.vocabulary?.length||0) + ' words');
+    state.analysis = result;
+    state.mode = 'learn';
+    state.screen = 'result';
+    render();
+    log('   Result page rendered!');
+  } catch (e) {
+    log('   ❌ ERROR: ' + e.name + ': ' + e.message);
+  }
+});
+
+// TEST 2: Use the real uploadTravelImage function
+document.getElementById('test2').addEventListener('click', async () => {
+  diag.textContent = '=== TEST 2: Real upload flow ===\n';
+  try {
+    log('1. Fetching proof.png...');
+    const resp = await fetch('proof.png');
+    const blob = await resp.blob();
+    log('   blob: ' + blob.size + ' bytes');
+    const file = new File([blob], 'proof.png', { type: 'image/png' });
+    const fakeInput = { files: [file], dataset: { uploadMode: 'learn' } };
+    log('2. Calling uploadTravelImage...');
+    uploadTravelImage(fakeInput, 'learn');
+    log('   uploadTravelImage returned, watching for state changes...');
+    // Poll state every 2 seconds
+    const poll = setInterval(() => {
+      log('   [poll] screen=' + state.screen + ' analysis=' + (state.analysis ? 'SET' : 'null'));
+      if (state.screen !== 'loading') {
+        clearInterval(poll);
+        log('   DONE! screen=' + state.screen);
+      }
+    }, 3000);
+  } catch (e) {
+    log('   ❌ ERROR: ' + e.message);
+  }
 });
 </script>
 </body>
