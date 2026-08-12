@@ -485,7 +485,21 @@ function vocab() {
  </section>`, 'vocab');
 }
 
-function trip() { return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>24</strong><span>words<br>collected</span></div><div><strong>8</strong><span>moments<br>scanned</span></div><div><strong>71%</strong><span>recall<br>rate</span></div></div><div class="return-card"><span>↻</span><div><p class="eyebrow">FOR YOUR NEXT JAPAN TRIP</p><h2>Your past discoveries are waiting.</h2><p>Take a 2-minute refresh before your next adventure.</p><button class="dark-btn" data-action="quiz">Refresh my memory ${icon('arrow')}</button></div></div></section>`, 'trip'); }
+function trip() {
+  const pastTrips = loadPastTrips();
+  const notebookColors = ['#f6dd98', '#e7e0f1', '#fce4d6', '#dce8d9', '#d6e9f0', '#fde2c4', '#e8dff5', '#d9eed7', '#f7d9e4', '#e4ecd6'];
+  const pastTripList = pastTrips.length
+    ? `<div class="past-trips">${pastTrips.map((t, i) => {
+        const color = notebookColors[i % notebookColors.length];
+        const cityOnly = (t.place || '').split(',')[0].trim() || t.name || 'Trip';
+        return `<button class="past-trip-card" style="--nt-color:${color};--nt-color-soft:${color}cc;--nt-color-line:${color}99" data-action="openPastTrip" data-trip-idx="${i}">
+          <span class="nt-icon" aria-hidden="true"><span class="nt-spine"></span><span class="nt-page"></span><span class="nt-lines"><i></i><i></i><i></i></span></span>
+          <span class="nt-text"><b>${cityOnly}</b><small>${t.dates || (t.savedAt ? new Date(t.savedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '')}</small><span class="nt-count">${t.vocabCount || 0} ${(t.vocabCount === 1) ? 'word' : 'words'}</span></span>
+        </button>`;
+      }).join('')}</div>`
+    : `<div class="past-trips empty"><p>Your past trips will turn into lovely little notebooks here.</p></div>`;
+  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>24</strong><span>words<br>collected</span></div><div><strong>8</strong><span>moments<br>scanned</span></div><div><strong>71%</strong><span>recall<br>rate</span></div></div><div class="section-heading past-trips-heading"><div><p class="eyebrow">YOUR LITTLE NOTEBOOKS</p><h2>Past journeys</h2></div></div>${pastTripList}</section>`, 'trip');
+}
 
 function quiz() {
  // Build quiz questions from saved vocab; fall back to starter set if empty
@@ -565,10 +579,22 @@ app.addEventListener('click', e => {
   if (a==='quizNext') { if (state.quiz) { state.quiz.idx++; state.quiz.answered = false; state.quiz.picked = null; } }
   if (a==='quizRestart') { state.quiz = null; }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
+  if (a==='openPastTrip') {
+    const past = loadPastTrips()[parseInt(target.dataset.tripIdx, 10)];
+    if (past && past.vocab && past.vocab.length) {
+      data.vocab = [...past.vocab];
+      openLexicon();
+      return;
+    } else if (past) {
+      data.vocab = [];
+      openLexicon();
+      return;
+    }
+  }
   render();
 });
 
-// Plays the animated Phrasebook-opening transition (bottom-to-top), then shows vocab.
+// Plays the animated Phrasebook-opening transition (little yellow notebook opening), then shows vocab.
 function openLexicon() {
   // Render the vocab page underneath first, so the overlay can fade out onto it.
   state.screen = 'vocab';
@@ -576,13 +602,15 @@ function openLexicon() {
   const overlay = document.createElement('div');
   overlay.className = 'lexicon-transition';
   overlay.innerHTML = `<div class="lexicon-book">
-    <div class="lexicon-pages-reveal"><i></i><i></i><i></i><i></i></div>
-    <div class="lexicon-cover-bottom">
-      <span class="lc-icon">✦</span>
-      <span class="lc-title">Phrasebook</span>
-      <span class="lc-sub">${data.trip.name.toUpperCase()}</span>
+    <div class="lexicon-spread">
+      <div class="lexicon-page lexicon-page-left"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="lexicon-page lexicon-page-right"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="lexicon-flip">
+        <div class="lexicon-flip-face lexicon-flip-front"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="lexicon-flip-face lexicon-flip-back"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
     </div>
-    <div class="lexicon-hinge"></div>
+    <div class="lexicon-cover"><span class="lc-title">Phrasebook</span><span class="lc-sub">${data.trip.name.toUpperCase()}</span></div>
   </div>`;
   document.body.appendChild(overlay);
   // Fade the overlay away into the vocab page (smooth, no hard cut).
