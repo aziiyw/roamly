@@ -329,11 +329,11 @@ function setup() {
   app.innerHTML = `<section class="setup-page">
    <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET'S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
    <div class="place-card" id="dest-toggle"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon('arrow')}</div>
-   <div class="dest-picker" id="dest-picker"><input class="dest-search" id="dest-search" type="text" placeholder="Type a city…" autocomplete="off"><div class="dest-list" id="dest-list">${destinations.map(d => destOption(d)).join('')}</div><p class="dest-hint">or pick from a few favourites below</p></div>
+   <div class="dest-picker" id="dest-picker"><input class="dest-search" id="dest-search" type="text" placeholder="Type a city, country, or language…" autocomplete="off"><div class="dest-list" id="dest-list">${destinations.map(d => destOption(d)).join('')}</div><p class="dest-hint">or pick from a few favourites below</p></div>
    <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" data-field="tripName" /></div><div><label>Dates</label><div class="date-display" id="date-display">${data.trip.dates || 'Tap to choose dates'}</div></div></div>
    <div class="calendar-wrap" id="calendar-wrap"></div>
    <div class="memory-note"><div>♡</div><p>We'll keep every word you meet here in one lovely little Phrasebook.</p></div>
-   <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon('arrow')}</span></button>
+   <button class="primary full" data-action="startChapter">Start this chapter <span>${icon('arrow')}</span></button>
   </section>`;
   // Wire up destination picker: search-as-you-type filter over every city
   const picker = document.getElementById('dest-picker');
@@ -355,7 +355,10 @@ function setup() {
   });
   // Wire up trip name input
   document.querySelector('[data-field="tripName"]')?.addEventListener('input', (e) => { data.trip.name = e.target.value; });
-  // Wire up calendar
+  // Wire up calendar: hidden until the dates row is tapped; stays open while picking
+  const calendarWrap = document.getElementById('calendar-wrap');
+  calendarWrap.style.display = 'none';
+  document.getElementById('date-display').addEventListener('click', () => { calendarWrap.style.display = calendarWrap.style.display === 'none' ? 'block' : 'none'; });
   buildCalendar();
 }
 
@@ -403,17 +406,25 @@ function buildCalendar() {
   }));
   document.getElementById('cal-prev')?.addEventListener('click', () => { if (m === 0) { calState.month = 11; calState.year--; } else calState.month--; buildCalendar(); });
   document.getElementById('cal-next')?.addEventListener('click', () => { if (m === 11) { calState.month = 0; calState.year++; } else calState.month++; buildCalendar(); });
-  wrap.style.display = 'none';
-  // Show calendar when date display is clicked
-  document.getElementById('date-display')?.addEventListener('click', () => { wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none'; });
+  // NOTE: the calendar stays open after selecting dates — the toggle in setup()
+  // controls visibility, and selecting a start/end day never closes it.
+}
+
+function memory() {
+  // Separate page shown right after setup when a past trip shared this language.
+  const match = findMatchingLangTrip(data.trip.langCode);
+  if (!match) { state.screen = 'modeChoice'; return render(); }
+  app.innerHTML = `<section class="mode-choice-page">
+    <button class="back" data-action="setup">←</button>
+    <div class="choice-top"><span class="trip-mini">↻</span><p class="eyebrow">A PAST ${data.trip.lang.toUpperCase()} TRIP</p><h1>Rejog your<br><i>memory?</i></h1><p>You learned ${match.vocabCount} ${match.lang} words during your ${match.place} trip. A fast quiz will wake them up again before you roam.</p></div>
+    <div class="memory-preview">${(match.vocab || []).slice(0, 4).map(w => `<span>${w.word}</span>`).join('')}</div>
+    <button class="primary full" data-action="memoryQuiz">${icon('spark')} Yes — quiz me <span>${icon('arrow')}</span></button>
+    <button class="choice-later" data-action="modeChoice">Skip for now — show me the modes</button>
+  </section>`;
 }
 
 function modeChoice() {
-  // Check if a past trip shared this language → show memory-jog popup
-  const match = findMatchingLangTrip(data.trip.langCode);
-  const memoryBanner = match ? `<div class="memory-jog" data-action="dismissMemory"><div class="mj-inner"><span class="mj-icon">↻</span><div><b>Rejog your memory?</b><p>You learned ${match.vocabCount} ${match.lang} words on a past trip to ${match.place.split(',')[0]}.</p></div><button class="mj-btn" data-action="quiz">Refresh ${icon('arrow')}</button><button class="mj-close" data-action="dismissMemory">✕</button></div></div>` : '';
   app.innerHTML = `<section class="mode-choice-page">
-    ${memoryBanner}
     <div class="choice-top"><span class="trip-mini">${data.trip.flag}</span><p class="eyebrow">${data.trip.name.toUpperCase()} IS READY</p><h1>How would you like<br>to <i>explore?</i></h1><p>Choose what feels right for this moment. You can switch whenever you need to.</p></div>
     <label class="mode-option learn-option"><input type="file" accept="image/*" data-upload-mode="learn"><span class="option-icon">✦</span><div><b>Learn as you translate</b><p>Upload a photo and we'll pull out helpful words to keep.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
     <label class="mode-option translate-option"><input type="file" accept="image/*" data-upload-mode="translate"><span class="option-icon">あ</span><div><b>Just translate</b><p>Upload a sign, menu, or ticket for a quick translation.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
@@ -495,7 +506,7 @@ function quiz() {
 
 function render() {
   try {
-    const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+    const views = { welcome, setup, modeChoice, memory, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
     const html = views[state.screen]();
     // Some screen functions return an HTML string (via shell()), others set
     // app.innerHTML directly. Assign the return value if one was returned.
@@ -540,13 +551,20 @@ app.addEventListener('click', e => {
   // Play the Phrasebook-opening animation before showing the vocab page
   if (a === 'vocab') { openLexicon(); return; }
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
+  if (a === 'startChapter') state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice';
+  if (a === 'memory') state.screen = 'memory';
+  if (a === 'memoryQuiz') {
+    // Load the past trip's words so the rejog quiz tests what they actually learned.
+    const past = findMatchingLangTrip(data.trip.langCode);
+    if (past && past.vocab && past.vocab.length) data.vocab = [...past.vocab];
+    state.screen = 'quiz';
+  }
   if (a === 'learn'||a==='translate') { state.mode=a; state.screen='scan'; }
   if (a==='switchMode') state.mode=state.mode==='learn'?'translate':'learn';
   if (a==='answer') { const pick = target.dataset.pick; if (state.quiz) { state.quiz.picked = pick; state.quiz.answered = true; const pool = (data.vocab.length >= 2 ? data.vocab : starterVocabulary); const word = pool[state.quiz.order[state.quiz.idx]]; if (pick === word?.meaning) state.quiz.score++; } }
   if (a==='quizNext') { if (state.quiz) { state.quiz.idx++; state.quiz.answered = false; state.quiz.picked = null; } }
   if (a==='quizRestart') { state.quiz = null; }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
-  if (a==='dismissMemory') { const banner = document.querySelector('.memory-jog'); if (banner) banner.remove(); return; }
   render();
 });
 

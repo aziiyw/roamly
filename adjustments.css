@@ -94,6 +94,11 @@
 .quiz-done h1{font:900 26px/1.15 'Nunito'}
 .quiz-done h1 i{font-family:'Playfair Display';font-weight:600;color:#ac9ac5}
 
+/* === Item 17: Rejog-memory page (between setup and scanning) === */
+.memory-preview{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:6px 0 24px}
+.memory-preview span{font-size:14px;font-weight:800;color:#6a5f8f;background:#efe9f9;border:1px solid #ddd3ef;border-radius:20px;padding:7px 14px}
+.mode-choice-page .back{margin-bottom:18px;font-size:18px}
+
 /* === Item 5: Lexicon-open transition — opens BOTTOM TO TOP === */
 .lexicon-transition{position:fixed;inset:0;z-index:99999;background:#fffefd;display:flex;align-items:center;justify-content:center;perspective:1200px;animation:lexicon-fade-in .3s ease both}
 .lexicon-book{position:relative;width:220px;height:290px;transform-style:preserve-3d;animation:lexicon-enter .35s ease both}
