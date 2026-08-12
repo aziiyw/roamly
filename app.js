@@ -217,9 +217,11 @@ function quiz() { return shell(`<section class="page quiz-page"><button class="b
 function render() {
   try {
     const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
-    views[state.screen]();
+    const html = views[state.screen]();
+    // Some screen functions return an HTML string (via shell()), others set
+    // app.innerHTML directly. Assign the return value if one was returned.
+    if (html) app.innerHTML = html;
   } catch (err) {
-    // Show the error on-screen so we can diagnose without console
     app.innerHTML = `<section style="padding:30px;font-family:monospace;font-size:12px;color:#c00;white-space:pre-wrap;"><b>Render error on screen: ${state.screen}</b>\n\n${(err && err.stack) || err}\n\n<button onclick="state.screen='loading';render()" style="margin-top:20px;padding:10px 20px;font-size:14px;cursor:pointer;">Back</button></section>`;
   }
 }
