@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Verify Scan Fix</title></head>
+<body>
+<h2>Scan Fix Verification</h2>
+<p>Uses the REAL app.js code (analyzeImageClientSide with parseGLMJson fix).</p>
+<button id="run">Run scan test</button>
+<pre id="log" style="background:#f0f0f0;padding:16px;font-size:13px;max-height:600px;overflow:auto;white-space:pre-wrap;"></pre>
+<script src="config.js?v=3"></script>
+<script src="app.js?v=3"></script>
+<script>
+const log = document.getElementById('log');
+function out(msg) { log.textContent += msg + '\n'; log.scrollTop = log.scrollHeight; }
+
+document.getElementById('run').addEventListener('click', async () => {
+  log.textContent = '=== Scan Fix Verification ===\n\n';
+  // Create a realistic test image with text
+  out('1. Creating test image...');
+  const canvas = document.createElement('canvas');
+  canvas.width = 400; canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 400, 200);
+  ctx.fillStyle = '#000'; ctx.font = '48px sans-serif';
+  ctx.fillText('出口', 120, 100);
+  ctx.font = '18px sans-serif';
+  ctx.fillText('deguchi - Exit', 100, 160);
+
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  out('   image: ' + blob.size + ' bytes');
+
+  // Read with FileReader (exactly like app.js)
+  out('2. Reading with FileReader...');
+  const reader = new FileReader();
+  reader.onload = async () => {
+    out('   onload fired, data URL length: ' + reader.result.length);
+    out('3. Calling analyzeImageClientSide...');
+    const start = performance.now();
+    try {
+      const analysis = await analyzeImageClientSide(reader.result);
+      const elapsed = ((performance.now() - start) / 1000).toFixed(1);
+      out('   ✅ SUCCESS in ' + elapsed + 's');
+      out('   translation: ' + JSON.stringify(analysis.translation));
+      out('   detectedText: ' + JSON.stringify(analysis.detectedText));
+      out('   vocabulary: ' + (analysis.vocabulary?.length || 0) + ' words');
+      out('\n🎉 The scan fix works! The JSON parsing issue is resolved.');
+    } catch (err) {
+      const elapsed = ((performance.now() - start) / 1000).toFixed(1);
+      out('   ❌ FAILED after ' + elapsed + 's');
+      out('   ' + err.name + ': ' + err.message);
+    }
+  };
+  reader.readAsDataURL(blob);
+});
+</script>
+</body>
+</html>
