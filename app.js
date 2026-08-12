@@ -233,19 +233,28 @@ function uploadTravelImage(input, mode) {
   state.scanError = '';
   state.screen = 'loading';
   render();
+  // DIAG: show where we are
+  console.log('[Roamly] uploadTravelImage: image size', image.size, 'type', image.type);
   const reader = new FileReader();
   reader.onload = async () => {
+    console.log('[Roamly] FileReader.onload fired, result length:', reader.result?.length);
     try {
+      console.log('[Roamly] calling analyzeImageClientSide...');
       state.analysis = await analyzeImageClientSide(reader.result);
+      console.log('[Roamly] analysis received:', state.analysis?.translation);
       const newWords = (state.analysis.vocabulary || []).map(word => ({ word: word.word, reading: word.reading || '', meaning: word.meaning || '', category: word.category || 'Signs', seen: 1, level: 15, status: 'New', place: data.trip.place }));
       data.vocab = [...newWords, ...data.vocab.filter(existing => !newWords.some(word => word.word === existing.word))];
       state.screen = 'result';
+      console.log('[Roamly] setting screen to result');
     } catch (error) {
+      console.log('[Roamly] ERROR:', error.message);
       state.scanError = error.message || 'The translation service is unavailable.';
       state.screen = 'scanError';
     }
     render();
   };
+  reader.onerror = (e) => { console.log('[Roamly] FileReader ERROR:', e); state.scanError = 'Could not read the image file.'; state.screen = 'scanError'; render(); };
+  console.log('[Roamly] calling reader.readAsDataURL...');
   reader.readAsDataURL(image);
 }
 app.addEventListener('change', e => { if (e.target.matches('input[type="file"][data-upload-mode]')) uploadTravelImage(e.target, e.target.dataset.uploadMode); });
