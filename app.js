@@ -215,8 +215,13 @@ function trip() { return shell(`<section class="page trip-page"><div class="trip
 function quiz() { return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-steps"><i></i><i class="active"></i><i></i><span>1 of 3</span></div><div class="quiz-flower">✦</div><p class="eyebrow">A TINY HELLO AGAIN</p><h1>Do you remember<br>what this means?</h1><div class="quiz-word">入口<span>iriguchi</span></div>${state.quizAnswered ? `<div class="answer-reveal"><b>Entrance</b><p>Exactly — you first met this word at Nishiki Market.</p></div>` : `<div class="answer-options"><button data-action="answer">Entrance</button><button data-action="answer">Exit</button><button data-action="answer">Platform</button></div>`}<p class="quiz-note">No pressure. Getting it wrong is how it starts to stick.</p></section>`, 'home'); }
 
 function render() {
-  const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
-  views[state.screen]();
+  try {
+    const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+    views[state.screen]();
+  } catch (err) {
+    // Show the error on-screen so we can diagnose without console
+    app.innerHTML = `<section style="padding:30px;font-family:monospace;font-size:12px;color:#c00;white-space:pre-wrap;"><b>Render error on screen: ${state.screen}</b>\n\n${(err && err.stack) || err}\n\n<button onclick="state.screen='loading';render()" style="margin-top:20px;padding:10px 20px;font-size:14px;cursor:pointer;">Back</button></section>`;
+  }
 }
 window.chooseTravelMode = (mode) => { state.mode = mode; state.screen = 'scan'; render(); };
 function uploadTravelImage(input, mode) {
