@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Proof</title>
+<style>
+  body { margin: 0; padding: 0; }
+  #app { width: 400px; margin: 0 auto; border: 1px solid #ccc; min-height: 600px; }
+  #controls { padding: 20px; text-align: center; background: #f0f0f0; }
+  button { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <button id="run">Upload screenshot & scan</button>
+</div>
+<div id="app"></div>
+<script src="config.js?v=7"></script>
+<script src="app.js?v=7"></script>
+<script>
+document.getElementById('run').addEventListener('click', async () => {
+  const resp = await fetch('proof.png');
+  const blob = await resp.blob();
+  const file = new File([blob], 'proof.png', { type: 'image/png' });
+  const fakeInput = { files: [file], dataset: { uploadMode: 'learn' } };
+  uploadTravelImage(fakeInput, 'learn');
+});
+</script>
+</body>
+</html>
