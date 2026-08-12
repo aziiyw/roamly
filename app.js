@@ -1,3 +1,14 @@
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+// Fallback vocab for the quiz when the user hasn't scanned anything yet.
+const starterVocabulary = [
+  { word: '出口', reading: 'deguchi', meaning: 'Exit', place: 'Kyoto Station' },
+  { word: '入口', reading: 'iriguchi', meaning: 'Entrance', place: 'Nishiki Market' },
+  { word: 'おすすめ', reading: 'osusume', meaning: 'Recommendation', place: 'Kissa Kōyō' },
+  { word: '現金のみ', reading: 'genkin nomi', meaning: 'Cash only', place: 'Fushimi Inari' },
+  { word: 'お手洗い', reading: 'otearai', meaning: 'Restroom', place: 'Arashiyama Station' }
+];
+
 const icons = {
   arrow: '<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>',
   camera: '<svg viewBox="0 0 24 24"><path d="M4 7h3l1.4-2h7.2L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.2"/></svg>',
@@ -11,9 +22,26 @@ const icons = {
   x: '<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>'
 };
 
+// Destinations the user can pick from. Each has a flag emoji, city, country, and language tag.
+const destinations = [
+  { city: 'Kyoto', country: 'Japan', flag: '🌸', lang: 'Japanese', langCode: 'ja' },
+  { city: 'Paris', country: 'France', flag: '🥐', lang: 'French', langCode: 'fr' },
+  { city: 'Rome', country: 'Italy', flag: '🏛️', lang: 'Italian', langCode: 'it' },
+  { city: 'Barcelona', country: 'Spain', flag: '💃', lang: 'Spanish', langCode: 'es' },
+  { city: 'Seoul', country: 'South Korea', flag: '🍡', lang: 'Korean', langCode: 'ko' },
+  { city: 'Bangkok', country: 'Thailand', flag: '🛕', lang: 'Thai', langCode: 'th' },
+  { city: 'Lisbon', country: 'Portugal', flag: '🌊', lang: 'Portuguese', langCode: 'pt' },
+  { city: 'Berlin', country: 'Germany', flag: '🍺', lang: 'German', langCode: 'de' },
+  { city: 'Istanbul', country: 'Türkiye', flag: '🕌', lang: 'Turkish', langCode: 'tr' },
+  { city: 'Mexico City', country: 'Mexico', flag: '🌮', lang: 'Spanish', langCode: 'es' },
+  { city: 'Cairo', country: 'Egypt', flag: '🐫', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Amsterdam', country: 'Netherlands', flag: '🌷', lang: 'Dutch', langCode: 'nl' }
+];
+
 const data = {
-  trip: { name: 'Spring in Kyoto', place: 'Kyoto, Japan', flag: '🌸', dates: 'Mar 24 – Apr 7' },
-  vocab: []
+  trip: { name: 'Spring in Kyoto', place: 'Kyoto, Japan', flag: '🌸', lang: 'Japanese', langCode: 'ja', dates: 'Mar 24 – Apr 7', dateStart: '', dateEnd: '' },
+  vocab: [],
+  pastTrips: []
 };
 
 let state = { screen: 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '' };
@@ -139,13 +167,79 @@ function welcome() {
 }
 
 function setup() {
+  const selectedDest = destinations.find(d => `${d.city}, ${d.country}` === data.trip.place) || destinations[0];
   app.innerHTML = `<section class="setup-page">
-   <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET'S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
-   <div class="place-card"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon('arrow')}</div>
-   <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" /></div><div><label>Dates</label><input value="${data.trip.dates}" /></div></div>
-   <div class="memory-note"><div>♡</div><p>We’ll keep every word you meet here in one lovely little memory book.</p></div>
-   <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon('arrow')}</span></button>
+   <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET’S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
+   <div class="place-card" id="dest-toggle"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon(‘arrow’)}</div>
+   <div class="dest-picker" id="dest-picker">${destinations.map(d => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? ‘selected’ : ‘’}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`).join(‘’)}</div>
+   <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" data-field="tripName" /></div><div><label>Dates</label><div class="date-display" id="date-display">${data.trip.dates || ‘Tap to choose dates’}</div></div></div>
+   <div class="calendar-wrap" id="calendar-wrap"></div>
+   <div class="memory-note"><div>♡</div><p>We’ll keep every word you meet here in one lovely little Lexicon.</p></div>
+   <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon(‘arrow’)}</span></button>
   </section>`;
+  // Wire up destination picker
+  const picker = document.getElementById(‘dest-picker’);
+  picker.style.display = ‘none’;
+  document.getElementById(‘dest-toggle’).addEventListener(‘click’, () => { picker.style.display = picker.style.display === ‘none’ ? ‘grid’ : ‘none’; });
+  picker.querySelectorAll(‘[data-dest]’).forEach(btn => btn.addEventListener(‘click’, (e) => {
+    const [city, country, flag, lang, langCode] = e.currentTarget.dataset.dest.split(‘|’);
+    data.trip.place = `${city}, ${country}`; data.trip.flag = flag; data.trip.lang = lang; data.trip.langCode = langCode;
+    data.trip.name = data.trip.name || `${city} adventure`;
+    picker.style.display = ‘none’; render();
+  }));
+  // Wire up trip name input
+  document.querySelector(‘[data-field="tripName"]’)?.addEventListener(‘input’, (e) => { data.trip.name = e.target.value; });
+  // Wire up calendar
+  buildCalendar();
+}
+
+// Lightweight calendar: user taps a start day, then an end day.
+let calState = { month: new Date().getMonth(), year: new Date().getFullYear(), start: null, end: null };
+function buildCalendar() {
+  const wrap = document.getElementById('calendar-wrap');
+  if (!wrap) return;
+  // Restore from saved dates
+  if (data.trip.dateStart) calState.start = new Date(data.trip.dateStart);
+  if (data.trip.dateEnd) calState.end = new Date(data.trip.dateEnd);
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days = ['S','M','T','W','T','F','S'];
+  const y = calState.year, m = calState.month;
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  let cells = '';
+  for (let i = 0; i < firstDay; i++) cells += '<i class="cal-blank"></i>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(y, m, d);
+    const ts = date.getTime();
+    let cls = 'cal-day';
+    if (calState.start && ts === calState.start.getTime()) cls += ' cal-start';
+    if (calState.end && ts === calState.end.getTime()) cls += ' cal-end';
+    if (calState.start && calState.end && ts > calState.start.getTime() && ts < calState.end.getTime()) cls += ' cal-in-range';
+    cells += `<button class="${cls}" data-cal-day="${d}">${d}</button>`;
+  }
+  wrap.innerHTML = `<div class="cal-header"><button id="cal-prev" ${m === 0 && y === new Date().getFullYear() ? 'disabled' : ''}>←</button><b>${months[m]} ${y}</b><button id="cal-next">→</button></div><div class="cal-weekdays">${days.map(dd => `<span>${dd}</span>`).join('')}</div><div class="cal-grid">${cells}</div>`;
+  // Wire up day clicks
+  wrap.querySelectorAll('[data-cal-day]').forEach(btn => btn.addEventListener('click', (e) => {
+    const d = parseInt(e.currentTarget.dataset.calDay);
+    const date = new Date(y, m, d);
+    if (!calState.start || (calState.start && calState.end)) { calState.start = date; calState.end = null; }
+    else if (date < calState.start) { calState.end = calState.start; calState.start = date; }
+    else { calState.end = date; }
+    if (calState.start && calState.end) {
+      data.trip.dateStart = calState.start.toISOString();
+      data.trip.dateEnd = calState.end.toISOString();
+      const fmt = (dt) => `${months[dt.getMonth()].slice(0,3)} ${dt.getDate()}`;
+      data.trip.dates = `${fmt(calState.start)} – ${fmt(calState.end)}`;
+      const display = document.getElementById('date-display');
+      if (display) display.textContent = data.trip.dates;
+    }
+    buildCalendar();
+  }));
+  document.getElementById('cal-prev')?.addEventListener('click', () => { if (m === 0) { calState.month = 11; calState.year--; } else calState.month--; buildCalendar(); });
+  document.getElementById('cal-next')?.addEventListener('click', () => { if (m === 11) { calState.month = 0; calState.year++; } else calState.month++; buildCalendar(); });
+  wrap.style.display = 'none';
+  // Show calendar when date display is clicked
+  document.getElementById('date-display')?.addEventListener('click', () => { wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none'; });
 }
 
 function modeChoice() {
@@ -205,14 +299,29 @@ function learningPanel(word) { return `<div class="learning-panel"><div class="s
 
 function vocab() {
  const list = data.vocab.filter(v => (state.category === 'All' || v.category === state.category) && `${v.word} ${v.meaning}`.toLowerCase().includes(state.query.toLowerCase()));
- return shell(`<section class="page vocab-page"><div class="vocab-head"><div class="vocab-head-row"><div><p class="eyebrow">YOUR LEXICON</p><h1>Words you've<br><i>met.</i></h1><p>Collected around ${data.trip.place}</p></div><button class="quiz-fab" data-action="quiz">${icon('spark')}<span>Quiz</span></button></div></div><div class="search"><span>${icon('search')}</span><input placeholder="Find a word" value="${state.query}" data-input="query"><button>${icon('x')}</button></div>
+ return shell(`<section class="page vocab-page"><div class="vocab-head"><div class="vocab-head-row"><div><p class="eyebrow">YOUR LEXICON</p><h1>Words you've<br><i>met.</i></h1><p>Collected around ${data.trip.place}</p></div><button class="quiz-fab" data-action="quiz">${icon('spark')} Test yourself</button></div></div><div class="search"><span>${icon('search')}</span><input placeholder="Find a word" value="${state.query}" data-input="query"><button>${icon('x')}</button></div>
  <div class="notebook"><div class="notebook-rings"><i></i><i></i><i></i><i></i></div><div class="notebook-cover"><span>✦</span><p>KYOTO TRIP</p><b>2026</b><small>TRAVEL WORDS</small></div><div class="notebook-pages"><div class="page-tabs">${['All','Food','Transport','Directions','Shopping'].map(c=>`<button class="${state.category===c?'selected':''}" data-category="${c}">${c}</button>`).join('')}</div><div class="page-title"><span>${state.category==='All'?'EVERYTHING I’VE MET':state.category.toUpperCase()}</span><b>${list.length} little ${list.length===1?'word':'words'}</b></div><div class="word-list">${list.map(v => `<article class="vocab-word"><div class="word-main"><b>${v.word}</b><span>${v.reading}</span></div><div class="word-detail"><strong>${v.meaning}</strong><p>First met at ${v.place} <span>♡</span></p><div class="word-footer"><span class="status ${v.status.replace(' ','-').toLowerCase()}">${v.status}</span><span>seen ${v.seen}×</span></div></div><div class="level"><i style="height:${v.level}%"></i></div></article>`).join('')}</div></div></div>
  </section>`, 'vocab');
 }
 
 function trip() { return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>24</strong><span>words<br>collected</span></div><div><strong>8</strong><span>moments<br>scanned</span></div><div><strong>71%</strong><span>recall<br>rate</span></div></div><div class="return-card"><span>↻</span><div><p class="eyebrow">FOR YOUR NEXT JAPAN TRIP</p><h2>Your past discoveries are waiting.</h2><p>Take a 2-minute refresh before your next adventure.</p><button class="dark-btn" data-action="quiz">Refresh my memory ${icon('arrow')}</button></div></div></section>`, 'trip'); }
 
-function quiz() { return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-steps"><i></i><i class="active"></i><i></i><span>1 of 3</span></div><div class="quiz-flower">✦</div><p class="eyebrow">A TINY HELLO AGAIN</p><h1>Do you remember<br>what this means?</h1><div class="quiz-word">入口<span>iriguchi</span></div>${state.quizAnswered ? `<div class="answer-reveal"><b>Entrance</b><p>Exactly — you first met this word at Nishiki Market.</p></div>` : `<div class="answer-options"><button data-action="answer">Entrance</button><button data-action="answer">Exit</button><button data-action="answer">Platform</button></div>`}<p class="quiz-note">No pressure. Getting it wrong is how it starts to stick.</p></section>`, 'home'); }
+function quiz() {
+ // Build quiz questions from saved vocab; fall back to starter set if empty
+ const pool = (data.vocab.length >= 2 ? data.vocab : starterVocabulary).slice(0, 5);
+ if (!state.quiz) state.quiz = { idx: 0, score: 0, answered: false, picked: null, order: shuffle(pool.map((_, i) => i)).slice(0, Math.min(3, pool.length)) };
+ const q = state.quiz;
+ const word = pool[q.order[q.idx]];
+ if (!word) { // finished
+   return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-done"><div class="quiz-flower">✦</div><p class="eyebrow">ALL DONE</p><h1>${q.score} out of ${q.order.length}<br><i>nice work!</i></h1><p>You remembered ${q.score} ${q.score===1?'word':'words'} this round.</p><button class="primary full" data-action="quizRestart">${icon('spark')} Quiz me again</button><button class="text-scan-again" data-action="vocab">Back to my Lexicon</button></div></section>`, 'home');
+ }
+ // Generate 3 options: correct + 2 distractors
+ const distractors = pool.filter((_, i) => !q.order.includes(i) || i !== q.order[q.idx]).map(w => w.meaning).filter(Boolean);
+ const options = shuffle([word.meaning, ...shuffle(distractors).slice(0, 2)]).slice(0, 3);
+ const isAnswered = q.answered;
+ const isCorrect = q.picked === word.meaning;
+ return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-steps">${q.order.map((_, i) => `<i class="${i === q.idx ? 'active' : i < q.idx ? 'done' : ''}"></i>`).join('')}<span>${q.idx + 1} of ${q.order.length}</span></div><div class="quiz-flower">✦</div><p class="eyebrow">A TINY HELLO AGAIN</p><h1>Do you remember<br>what this means?</h1><div class="quiz-word">${word.word}<span>${word.reading || ''}</span></div>${isAnswered ? `<div class="answer-reveal ${isCorrect ? 'correct' : 'wrong'}"><b>${word.meaning}</b><p>${isCorrect ? '✓ Exactly!' : 'Not quite — but now you know.'} You first met this word ${word.place ? 'at ' + word.place : 'on your trip'}.</p></div>` : `<div class="answer-options">${options.map(o => `<button class="${isAnswered && o === word.meaning ? 'correct-mark' : ''}" data-action="answer" data-pick="${o}">${o}</button>`).join('')}</div>`}${isAnswered ? `<button class="primary full quiz-next" data-action="quizNext">${q.idx + 1 < q.order.length ? 'Next word ' + icon('arrow') : 'See results ' + icon('arrow')}</button>` : ''}<p class="quiz-note">No pressure. Getting it wrong is how it starts to stick.</p></section>`, 'home');
+ }
 
 function render() {
   try {
@@ -262,22 +371,28 @@ app.addEventListener('click', e => {
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
   if (a === 'learn'||a==='translate') { state.mode=a; state.screen='scan'; }
   if (a==='switchMode') state.mode=state.mode==='learn'?'translate':'learn';
-  if (a==='answer') state.quizAnswered=true;
+  if (a==='answer') { const pick = target.dataset.pick; if (state.quiz) { state.quiz.picked = pick; state.quiz.answered = true; const pool = (data.vocab.length >= 2 ? data.vocab : starterVocabulary); const word = pool[state.quiz.order[state.quiz.idx]]; if (pick === word?.meaning) state.quiz.score++; } }
+  if (a==='quizNext') { if (state.quiz) { state.quiz.idx++; state.quiz.answered = false; state.quiz.picked = null; } }
+  if (a==='quizRestart') { state.quiz = null; }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
   render();
 });
 
-// Plays the animated Lexicon-opening transition, then shows the vocab page.
+// Plays the animated Lexicon-opening transition (bottom-to-top), then shows vocab.
 function openLexicon() {
   const overlay = document.createElement('div');
   overlay.className = 'lexicon-transition';
   overlay.innerHTML = `<div class="lexicon-book">
-    <div class="lexicon-cover-front"></div>
-    <div class="lexicon-pages-flip"><i></i><i></i><i></i></div>
-    <div class="lexicon-cover-spine"></div>
+    <div class="lexicon-pages-reveal"><i></i><i></i><i></i><i></i></div>
+    <div class="lexicon-cover-bottom">
+      <span class="lc-icon">✦</span>
+      <span class="lc-title">Lexicon</span>
+      <span class="lc-sub">${data.trip.name.toUpperCase()}</span>
+    </div>
+    <div class="lexicon-hinge"></div>
   </div>`;
   document.body.appendChild(overlay);
-  setTimeout(() => { overlay.remove(); state.screen = 'vocab'; render(); }, 1600);
+  setTimeout(() => { overlay.remove(); state.screen = 'vocab'; render(); }, 1800);
 }
 app.addEventListener('input', e => { if(e.target.dataset.input==='query') { state.query=e.target.value; render(); const input=document.querySelector('[data-input="query"]'); input?.focus(); input?.setSelectionRange(state.query.length,state.query.length); } });
 render();
