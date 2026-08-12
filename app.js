@@ -19,15 +19,6 @@ const data = {
 let state = { screen: 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '' };
 const app = document.querySelector('#app');
 
-// DEBUG: surface any uncaught errors visibly on the page so we can see them
-// without the browser console. Remove this block once issues are resolved.
-window.addEventListener('error', (e) => {
-  const dbg = document.createElement('div');
-  dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#c00;color:#fff;font:12px monospace;padding:8px;z-index:99999;white-space:pre-wrap;';
-  dbg.textContent = 'JS ERROR: ' + (e.error?.stack || e.message);
-  document.body.appendChild(dbg);
-});
-
 // System prompt + GLM request shape, mirrored from api/analyze.js so the
 // client-side call behaves identically to the old serverless function.
 const ANALYZE_SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
@@ -63,7 +54,42 @@ async function analyzeImageClientSide(dataUrl) {
   if (!glmResponse.ok) throw new Error(`The translation service is unavailable (GLM ${glmResponse.status}).`);
   const glmData = await glmResponse.json();
   const content = glmData.choices?.[0]?.message?.content || '';
-  return JSON.parse(content.replace(/^```json\s*|\s*```$/g, '').trim());
+  return parseGLMJson(content);
+}
+
+// Robustly parse the JSON object out of GLM's response. GLM often wraps output
+// in ```json fences and sometimes emits raw control characters (literal
+// newlines, tabs) inside string values that make JSON.parse throw. This
+// extracts the {...} block, strips fences, escapes control characters, and
+// falls back to brace-matching extraction if strict parse still fails.
+function parseGLMJson(content) {
+  if (!content || typeof content !== 'string') {
+    throw new Error('The AI returned an empty response. Please try another photo.');
+  }
+  // 1. Strip ```json ... ``` fences if present (also handles inline ones)
+  let text = content.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+  // 2. If there's surrounding prose, pull out the outermost { ... } block
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.slice(firstBrace, lastBrace + 1);
+  }
+  // 3. Try parsing as-is first
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // 4. Fix raw control characters inside string values: GLM sometimes puts
+    //    literal \n / \r / \t bytes inside JSON strings (illegal in JSON).
+    //    Escape them so JSON.parse accepts the string.
+    const escaped = text.replace(/("(?:\\.|[^"\\])*")/g, (match) =>
+      match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')
+    );
+    try {
+      return JSON.parse(escaped);
+    } catch (e2) {
+      throw new Error('Could not read the AI response. Please try a clearer photo.');
+    }
+  }
 }
 const button = (label, cls = '', action = '') => `<button class="${cls}" data-action="${action}">${label}</button>`;
 const icon = (name) => icons[name] || '';
@@ -162,13 +188,8 @@ function trip() { return shell(`<section class="page trip-page"><div class="trip
 function quiz() { return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-steps"><i></i><i class="active"></i><i></i><span>1 of 3</span></div><div class="quiz-flower">✦</div><p class="eyebrow">A TINY HELLO AGAIN</p><h1>Do you remember<br>what this means?</h1><div class="quiz-word">入口<span>iriguchi</span></div>${state.quizAnswered ? `<div class="answer-reveal"><b>Entrance</b><p>Exactly — you first met this word at Nishiki Market.</p></div>` : `<div class="answer-options"><button data-action="answer">Entrance</button><button data-action="answer">Exit</button><button data-action="answer">Platform</button></div>`}<p class="quiz-note">No pressure. Getting it wrong is how it starts to stick.</p></section>`, 'home'); }
 
 function render() {
-  try {
-    const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
-    views[state.screen]();
-  } catch (err) {
-    // DEBUG: show the error on the page so we can diagnose without the console
-    app.innerHTML = `<section style="padding:40px;font-family:monospace;font-size:13px;color:#c00;"><h2>Render error (screen: ${state.screen})</h2><pre>${(err && err.stack) || err}</pre></section>`;
-  }
+  const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+  views[state.screen]();
 }
 window.chooseTravelMode = (mode) => { state.mode = mode; state.screen = 'scan'; render(); };
 function uploadTravelImage(input, mode) {
