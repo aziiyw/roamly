@@ -201,26 +201,26 @@ function welcome() {
 function setup() {
   const selectedDest = destinations.find(d => `${d.city}, ${d.country}` === data.trip.place) || destinations[0];
   app.innerHTML = `<section class="setup-page">
-   <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET’S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
-   <div class="place-card" id="dest-toggle"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon(‘arrow’)}</div>
-   <div class="dest-picker" id="dest-picker">${destinations.map(d => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? ‘selected’ : ‘’}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`).join(‘’)}</div>
-   <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" data-field="tripName" /></div><div><label>Dates</label><div class="date-display" id="date-display">${data.trip.dates || ‘Tap to choose dates’}</div></div></div>
+   <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET'S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
+   <div class="place-card" id="dest-toggle"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon('arrow')}</div>
+   <div class="dest-picker" id="dest-picker">${destinations.map(d => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? 'selected' : ''}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`).join('')}</div>
+   <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" data-field="tripName" /></div><div><label>Dates</label><div class="date-display" id="date-display">${data.trip.dates || 'Tap to choose dates'}</div></div></div>
    <div class="calendar-wrap" id="calendar-wrap"></div>
-   <div class="memory-note"><div>♡</div><p>We’ll keep every word you meet here in one lovely little Lexicon.</p></div>
-   <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon(‘arrow’)}</span></button>
+   <div class="memory-note"><div>♡</div><p>We'll keep every word you meet here in one lovely little Lexicon.</p></div>
+   <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon('arrow')}</span></button>
   </section>`;
   // Wire up destination picker
-  const picker = document.getElementById(‘dest-picker’);
-  picker.style.display = ‘none’;
-  document.getElementById(‘dest-toggle’).addEventListener(‘click’, () => { picker.style.display = picker.style.display === ‘none’ ? ‘grid’ : ‘none’; });
-  picker.querySelectorAll(‘[data-dest]’).forEach(btn => btn.addEventListener(‘click’, (e) => {
-    const [city, country, flag, lang, langCode] = e.currentTarget.dataset.dest.split(‘|’);
+  const picker = document.getElementById('dest-picker');
+  picker.style.display = 'none';
+  document.getElementById('dest-toggle').addEventListener('click', () => { picker.style.display = picker.style.display === 'none' ? 'grid' : 'none'; });
+  picker.querySelectorAll('[data-dest]').forEach(btn => btn.addEventListener('click', (e) => {
+    const [city, country, flag, lang, langCode] = e.currentTarget.dataset.dest.split('|');
     data.trip.place = `${city}, ${country}`; data.trip.flag = flag; data.trip.lang = lang; data.trip.langCode = langCode;
     data.trip.name = data.trip.name || `${city} adventure`;
-    picker.style.display = ‘none’; render();
+    picker.style.display = 'none'; render();
   }));
   // Wire up trip name input
-  document.querySelector(‘[data-field="tripName"]’)?.addEventListener(‘input’, (e) => { data.trip.name = e.target.value; });
+  document.querySelector('[data-field="tripName"]')?.addEventListener('input', (e) => { data.trip.name = e.target.value; });
   // Wire up calendar
   buildCalendar();
 }
@@ -277,11 +277,11 @@ function buildCalendar() {
 function modeChoice() {
   // Check if a past trip shared this language → show memory-jog popup
   const match = findMatchingLangTrip(data.trip.langCode);
-  const memoryBanner = match ? `<div class="memory-jog" data-action="dismissMemory"><div class="mj-inner"><span class="mj-icon">↻</span><div><b>Rejog your memory?</b><p>You learned ${match.vocabCount} ${match.lang} words on a past trip to ${match.place.split(‘,’)[0]}.</p></div><button class="mj-btn" data-action="quiz">Refresh ${icon(‘arrow’)}</button><button class="mj-close" data-action="dismissMemory">✕</button></div></div>` : ‘’;
+  const memoryBanner = match ? `<div class="memory-jog" data-action="dismissMemory"><div class="mj-inner"><span class="mj-icon">↻</span><div><b>Rejog your memory?</b><p>You learned ${match.vocabCount} ${match.lang} words on a past trip to ${match.place.split(',')[0]}.</p></div><button class="mj-btn" data-action="quiz">Refresh ${icon('arrow')}</button><button class="mj-close" data-action="dismissMemory">✕</button></div></div>` : '';
   app.innerHTML = `<section class="mode-choice-page">
     ${memoryBanner}
     <div class="choice-top"><span class="trip-mini">${data.trip.flag}</span><p class="eyebrow">${data.trip.name.toUpperCase()} IS READY</p><h1>How would you like<br>to <i>explore?</i></h1><p>Choose what feels right for this moment. You can switch whenever you need to.</p></div>
-    <label class="mode-option learn-option"><input type="file" accept="image/*" data-upload-mode="learn"><span class="option-icon">✦</span><div><b>Learn as you translate</b><p>Upload a photo and we’ll pull out helpful words to keep.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
+    <label class="mode-option learn-option"><input type="file" accept="image/*" data-upload-mode="learn"><span class="option-icon">✦</span><div><b>Learn as you translate</b><p>Upload a photo and we'll pull out helpful words to keep.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
     <label class="mode-option translate-option"><input type="file" accept="image/*" data-upload-mode="translate"><span class="option-icon">あ</span><div><b>Just translate</b><p>Upload a sign, menu, or ticket for a quick translation.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
     <button class="choice-later" data-action="home">Maybe later — take me to my trip</button>
   </section>`;
@@ -292,7 +292,7 @@ function dashboard() {
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
  <div class="stats-grid"><div><strong>24</strong><span>words met</span></div><div><strong>8</strong><span>scans made</span></div><div><strong>71<small>%</small></strong><span>remembered</span></div></div>
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
- <div class="review-card"><div class="review-word"><span>入口</span><small>iriguchi</small></div><div class="review-copy"><b>You’ve met this one before</b><p>at Nishiki Market · 3 times</p><div class="mini-progress"><i style="width:53%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>
+ <div class="review-card"><div class="review-word"><span>入口</span><small>iriguchi</small></div><div class="review-copy"><b>You've met this one before</b><p>at Nishiki Market · 3 times</p><div class="mini-progress"><i style="width:53%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>
  <div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
  <div class="trail"><div class="trail-photo market">おすすめ</div><div><b>Morning at Kissa Kōyō</b><p>3 new words · 10:42 am</p></div><span>Food</span></div>
  </section>`, 'home');
@@ -302,8 +302,8 @@ function scan() {
  const isLearn = state.mode === 'learn';
  return shell(`<section class="page scan-page"><div class="scan-head"><div><p class="eyebrow">${isLearn ? 'MAKE IT STICK, NATURALLY' : 'JUST THE TRANSLATION'}</p><h1>${isLearn ? 'Learn new words<br>as you <i>meet them</i>' : 'Translate<br>what you <i>see.</i>'}</h1></div><button class="mode-switch" data-action="switchMode"><span>${icon('swap')}</span><b>${isLearn ? 'Learn' : 'Translate'}</b><small>mode</small></button></div>
  <div class="scan-tabs"><button class="${isLearn ? 'selected' : ''}" data-action="learn">Learn from it</button><button class="${!isLearn ? 'selected' : ''}" data-action="translate">Quick translate</button></div>
- <div class="camera-area"><div class="scan-corners"></div><div class="camera-symbol">${icon('camera')}</div><b class="snap-heading">Snap the world around you</b><p>Signs, menus, tickets, labels — anything you’re curious about.</p><div class="scan-actions"><label class="upload-button">${icon('camera')} Take photo<input type="file" accept="image/*" capture="environment" data-upload-mode="${state.mode}"></label><label class="upload-button light-upload">${icon('image')} Upload<input type="file" accept="image/*" data-upload-mode="${state.mode}"></label></div></div>
- <div class="tip"><span>${icon('spark')}</span><p>${isLearn ? 'We’ll pull out the words that are most likely to come in handy again.' : 'We’ll show the natural meaning, pronunciation, and helpful context.'}</p></div>
+ <div class="camera-area"><div class="scan-corners"></div><div class="camera-symbol">${icon('camera')}</div><b class="snap-heading">Snap the world around you</b><p>Signs, menus, tickets, labels — anything you're curious about.</p><div class="scan-actions"><label class="upload-button">${icon('camera')} Take photo<input type="file" accept="image/*" capture="environment" data-upload-mode="${state.mode}"></label><label class="upload-button light-upload">${icon('image')} Upload<input type="file" accept="image/*" data-upload-mode="${state.mode}"></label></div></div>
+ <div class="tip"><span>${icon('spark')}</span><p>${isLearn ? 'We'll pull out the words that are most likely to come in handy again.' : 'We'll show the natural meaning, pronunciation, and helpful context.'}</p></div>
  </section>`, 'scan');
 }
 
@@ -315,7 +315,7 @@ function result() {
  return shell(`<section class="page result-page"><div class="result-top"><button class="back" data-action="scan">←</button><div class="mode-chip">${isLearn ? '✦ Learning from your find' : '◌ Quick translation'}</div><button class="more">•••</button></div>
   <div class="source-preview uploaded-preview" style="background-image:linear-gradient(#173b3d88,#173b3d88),url('${state.uploadedImage}')"><span class="upload-label">Your scan</span>${scan.vocabulary?.slice(0,3).map(v=>`<i class="live-highlight" style="left:${(v.box?.x||0)/10}%;top:${(v.box?.y||0)/10}%;width:${(v.box?.width||200)/10}%;height:${(v.box?.height||80)/10}%"><b>${v.word}</b></i>`).join('')}</div>
   <div class="translation"><p class="eyebrow">YOU'RE LOOKING AT</p><h2>${scan.translation}</h2><p class="reading">${scan.detectedText} <span>${scan.romanisation || ''}</span><button>♬</button></p><p class="natural">${scan.naturalNote}</p></div>
-  ${isLearn ? learningPanel(firstWord) : `<div class="translate-note"><span>✦</span><p><b>Sounds more natural:</b> “${scan.translation}”</p></div>`}
+  ${isLearn ? learningPanel(firstWord) : `<div class="translate-note"><span>✦</span><p><b>Sounds more natural:</b> "${scan.translation}"</p></div>`}
   <div class="notebook-nudge"><span>✦</span><p><b>Very cute first meeting!</b><small>${firstWord.word} is now tucked into your Lexicon.</small></p></div>
   <button class="notebook-cta full" data-action="vocab"><span class="cta-book">▤</span> Open your Lexicon <span>→</span></button>
   <button class="text-scan-again" data-action="scan">${icon('camera')} Scan something else</button>
@@ -326,7 +326,7 @@ function loading() {
   app.innerHTML = `<section class="loading-page"><div class="loading-photo" ${state.uploadedImage ? `style="background-image:url('${state.uploadedImage}')"` : ''}></div><div class="scan-orbit"><i></i><i></i><i></i></div><p class="eyebrow">YOUR TRAVEL AI IS LOOKING</p><h1>Finding the words<br>worth <i>keeping.</i></h1><p>Reading the sign, translating naturally, and picking out useful travel vocabulary.</p><div class="loading-steps"><div class="loading-roller"><span>Reading text</span><span>Translating</span><span>Choosing helpful words</span></div></div></section>`;
 }
 
-function scanError() { return shell(`<section class="page scan-error"><div class="error-orb">!</div><p class="eyebrow">WE COULDN'T READ THAT ONE</p><h1>Let’s give it<br>another <i>try.</i></h1><p>${state.scanError || 'Make sure a valid Z.AI key is set in config.js, then try a clear photo.'}</p><button class="primary full" data-action="scan">${icon('camera')} Try another photo</button></section>`, 'scan'); }
+function scanError() { return shell(`<section class="page scan-error"><div class="error-orb">!</div><p class="eyebrow">WE COULDN'T READ THAT ONE</p><h1>Let's give it<br>another <i>try.</i></h1><p>${state.scanError || 'Make sure a valid Z.AI key is set in config.js, then try a clear photo.'}</p><button class="primary full" data-action="scan">${icon('camera')} Try another photo</button></section>`, 'scan'); }
 
 function learningPanel(word) { return `<div class="learning-panel"><div class="section-heading"><div><p class="eyebrow">TAKE A LITTLE WITH YOU</p><h2>Useful words here</h2></div><span class="count">1 worth keeping</span></div>
  <div class="word-row"><div><b>${word.word}</b><small>${word.reading || ''} · ${word.meaning || ''}</small></div><span class="tag directions">${word.category || 'Signs'}</span><button class="save-word" data-action="saved">✓</button></div>
@@ -336,7 +336,7 @@ function learningPanel(word) { return `<div class="learning-panel"><div class="s
 function vocab() {
  const list = data.vocab.filter(v => (state.category === 'All' || v.category === state.category) && `${v.word} ${v.meaning}`.toLowerCase().includes(state.query.toLowerCase()));
  return shell(`<section class="page vocab-page"><div class="vocab-head"><div class="vocab-head-row"><div><p class="eyebrow">YOUR LEXICON</p><h1>Words you've<br><i>met.</i></h1><p>Collected around ${data.trip.place}</p></div><button class="quiz-fab" data-action="quiz">${icon('spark')} Test yourself</button></div></div><div class="search"><span>${icon('search')}</span><input placeholder="Find a word" value="${state.query}" data-input="query"><button>${icon('x')}</button></div>
- <div class="notebook"><div class="notebook-rings"><i></i><i></i><i></i><i></i></div><div class="notebook-cover"><span>✦</span><p>KYOTO TRIP</p><b>2026</b><small>TRAVEL WORDS</small></div><div class="notebook-pages"><div class="page-tabs">${['All','Food','Transport','Directions','Shopping'].map(c=>`<button class="${state.category===c?'selected':''}" data-category="${c}">${c}</button>`).join('')}</div><div class="page-title"><span>${state.category==='All'?'EVERYTHING I’VE MET':state.category.toUpperCase()}</span><b>${list.length} little ${list.length===1?'word':'words'}</b></div><div class="word-list">${list.map(v => `<article class="vocab-word"><div class="word-main"><b>${v.word}</b><span>${v.reading}</span></div><div class="word-detail"><strong>${v.meaning}</strong><p>First met at ${v.place} <span>♡</span></p><div class="word-footer"><span class="status ${v.status.replace(' ','-').toLowerCase()}">${v.status}</span><span>seen ${v.seen}×</span></div></div><div class="level"><i style="height:${v.level}%"></i></div></article>`).join('')}</div></div></div>
+ <div class="notebook"><div class="notebook-rings"><i></i><i></i><i></i><i></i></div><div class="notebook-cover"><span>✦</span><p>KYOTO TRIP</p><b>2026</b><small>TRAVEL WORDS</small></div><div class="notebook-pages"><div class="page-tabs">${['All','Food','Transport','Directions','Shopping'].map(c=>`<button class="${state.category===c?'selected':''}" data-category="${c}">${c}</button>`).join('')}</div><div class="page-title"><span>${state.category==='All'?'EVERYTHING I'VE MET':state.category.toUpperCase()}</span><b>${list.length} little ${list.length===1?'word':'words'}</b></div><div class="word-list">${list.map(v => `<article class="vocab-word"><div class="word-main"><b>${v.word}</b><span>${v.reading}</span></div><div class="word-detail"><strong>${v.meaning}</strong><p>First met at ${v.place} <span>♡</span></p><div class="word-footer"><span class="status ${v.status.replace(' ','-').toLowerCase()}">${v.status}</span><span>seen ${v.seen}×</span></div></div><div class="level"><i style="height:${v.level}%"></i></div></article>`).join('')}</div></div></div>
  </section>`, 'vocab');
 }
 
