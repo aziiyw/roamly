@@ -1,17 +1,23 @@
 // Roamly client-side configuration.
 //
-// ⚠️  SECURITY WARNING — READ THIS.
-// This file is loaded by the browser, so ANYONE who visits your site can read
-// the key below in their dev tools. Treat it as fully public.
+// TWO WAYS TO PROVIDE THE API KEY:
 //
-// Use a THROWAWAY Z.AI key with a low quota that you can rotate or delete at
-// any time. Do NOT reuse a key that protects anything important.
+// OPTION A — PROXY (recommended, key is hidden):
+// Deploy the Cloudflare Worker in worker/proxy.js, set GLM_API_KEY as a
+// Worker secret, then paste the worker URL below. Leave glmApiKey empty.
+// Visitors can use the site but CANNOT see your key.
 //
-// Get a key at https://z.ai/  → generate one, paste it below.
-// To rotate: delete the old key at z.ai, generate a new one, replace glmApiKey,
-// commit, and push. Done.
+// OPTION B — DIRECT (key is public, simpler):
+// Leave glmProxyUrl empty and paste your Z.AI key in glmApiKey.
+// Anyone can find the key in their browser dev tools. Use a throwaway key.
+//
 window.ROAMLY_CONFIG = {
+  // OPTION A: paste your worker URL here to hide the key:
+  glmProxyUrl: '',  // e.g. 'https://roamly-proxy.yourname.workers.dev/api/analyze'
+
+  // OPTION B: paste your Z.AI key here (public — use throwaway key):
   glmApiKey: '3c1901bbc1054cdd903185e5ad5ee62d.JBRKybarxlENjgva',
+
   glmModel: 'glm-5v-turbo',
   glmEndpoint: 'https://api.z.ai/api/paas/v4/chat/completions'
 };

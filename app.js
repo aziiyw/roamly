@@ -1,3 +1,18 @@
+// === Trip memory: save and load past trips via localStorage ===
+function saveCurrentTrip() {
+  if (!data.trip.place || data.vocab.length === 0) return;
+  const past = loadPastTrips().filter(t => t.place !== data.trip.place);
+  past.unshift({ place: data.trip.place, flag: data.trip.flag, lang: data.trip.lang, langCode: data.trip.langCode, name: data.trip.name, dates: data.trip.dates, savedAt: Date.now(), vocabCount: data.vocab.length, vocab: data.vocab.slice(0, 50) });
+  try { localStorage.setItem('roamly_trips', JSON.stringify(past.slice(0, 10))); } catch(e) {}
+}
+function loadPastTrips() {
+  try { return JSON.parse(localStorage.getItem('roamly_trips') || '[]'); } catch(e) { return []; }
+}
+// Check if any past trip shares the same language as the current destination
+function findMatchingLangTrip(langCode) {
+  return loadPastTrips().find(t => t.langCode === langCode && t.vocab && t.vocab.length > 0);
+}
+
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 // Fallback vocab for the quiz when the user hasn't scanned anything yet.
@@ -61,11 +76,28 @@ const ANALYZE_SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion.
 }
 Choose at most 5 useful, common travel words. Coordinates must be normalized 0–1000 relative to the image, and the translation should sound natural in English.`;
 
-// Calls Z.AI's GLM vision model directly from the browser. Used when running
-// on GitHub Pages (no server). The key comes from config.js — see the warning
-// there; it is public, so use a throwaway key.
+// Calls Z.AI's GLM vision model. If glmProxyUrl is set in config.js, requests
+// go through the proxy (key stays hidden). Otherwise calls GLM directly (key
+// is public in the browser — use a throwaway key).
 async function analyzeImageClientSide(dataUrl) {
   const config = window.ROAMLY_CONFIG || {};
+
+  // OPTION A: use proxy (key hidden server-side)
+  if (config.glmProxyUrl) {
+    const proxyResp = await fetch(config.glmProxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl })
+    });
+    if (!proxyResp.ok) {
+      const err = await proxyResp.json().catch(() => ({}));
+      throw new Error(err.error || `The translation service is unavailable (${proxyResp.status}).`);
+    }
+    const data = await proxyResp.json();
+    return parseGLMJson(data.content || '');
+  }
+
+  // OPTION B: call GLM directly (key is public in config.js)
   if (!config.glmApiKey || config.glmApiKey === 'PASTE-YOUR-THROWAWAY-ZAI-KEY-HERE') {
     throw new Error("Roamly's API key isn't configured. Open config.js and paste a Z.AI key.");
   }
@@ -243,7 +275,11 @@ function buildCalendar() {
 }
 
 function modeChoice() {
+  // Check if a past trip shared this language → show memory-jog popup
+  const match = findMatchingLangTrip(data.trip.langCode);
+  const memoryBanner = match ? `<div class="memory-jog" data-action="dismissMemory"><div class="mj-inner"><span class="mj-icon">↻</span><div><b>Rejog your memory?</b><p>You learned ${match.vocabCount} ${match.lang} words on a past trip to ${match.place.split(‘,’)[0]}.</p></div><button class="mj-btn" data-action="quiz">Refresh ${icon(‘arrow’)}</button><button class="mj-close" data-action="dismissMemory">✕</button></div></div>` : ‘’;
   app.innerHTML = `<section class="mode-choice-page">
+    ${memoryBanner}
     <div class="choice-top"><span class="trip-mini">${data.trip.flag}</span><p class="eyebrow">${data.trip.name.toUpperCase()} IS READY</p><h1>How would you like<br>to <i>explore?</i></h1><p>Choose what feels right for this moment. You can switch whenever you need to.</p></div>
     <label class="mode-option learn-option"><input type="file" accept="image/*" data-upload-mode="learn"><span class="option-icon">✦</span><div><b>Learn as you translate</b><p>Upload a photo and we’ll pull out helpful words to keep.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
     <label class="mode-option translate-option"><input type="file" accept="image/*" data-upload-mode="translate"><span class="option-icon">あ</span><div><b>Just translate</b><p>Upload a sign, menu, or ticket for a quick translation.</p><small>UPLOAD A PHOTO <span>→</span></small></div></label>
@@ -350,6 +386,7 @@ function uploadTravelImage(input, mode) {
       state.analysis = await analyzeImageClientSide(reader.result);
       const newWords = (state.analysis.vocabulary || []).map(word => ({ word: word.word, reading: word.reading || '', meaning: word.meaning || '', category: word.category || 'Signs', seen: 1, level: 15, status: 'New', place: data.trip.place }));
       data.vocab = [...newWords, ...data.vocab.filter(existing => !newWords.some(word => word.word === existing.word))];
+      saveCurrentTrip();
       state.screen = 'result';
     } catch (error) {
       state.scanError = error.message || 'The translation service is unavailable.';
@@ -375,6 +412,7 @@ app.addEventListener('click', e => {
   if (a==='quizNext') { if (state.quiz) { state.quiz.idx++; state.quiz.answered = false; state.quiz.picked = null; } }
   if (a==='quizRestart') { state.quiz = null; }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
+  if (a==='dismissMemory') { const banner = document.querySelector('.memory-jog'); if (banner) banner.remove(); return; }
   render();
 });
 

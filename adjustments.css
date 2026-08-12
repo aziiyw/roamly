@@ -69,6 +69,25 @@
 .quiz-done h1{font:900 26px/1.15 'Nunito'}
 .quiz-done h1 i{font-family:'Playfair Display';font-weight:600;color:#ac9ac5}
 
+/* === Item 13: Memory jog banner === */
+.memory-jog{background:linear-gradient(135deg,#fff3d7,#f9e9b5);border-radius:16px;padding:4px;margin-bottom:16px;animation:mj-slide-in .4s ease both}
+.mj-inner{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.mj-icon{font-size:22px;color:#cda662;flex-shrink:0;animation:spin 3s ease infinite}
+.mj-inner>div{flex:1}
+.mj-inner b{font-size:12px;font-weight:800;color:#8b704a;display:block}
+.mj-inner p{font-size:10px;color:#a18865;margin:2px 0 0}
+.mj-btn{flex-shrink:0;background:#76633e;color:#fff;border-radius:10px;padding:8px 12px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:4px;cursor:pointer;border:none}
+.mj-btn svg{width:13px}
+.mj-close{flex-shrink:0;background:none;border:none;font-size:14px;color:#a18865;cursor:pointer;padding:4px}
+@keyframes mj-slide-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.answer-reveal.correct b{color:#2a7}
+.answer-options button.correct-mark{background:#e8f5e9!important;border-color:#4caf50!important}
+.quiz-next{margin-top:14px;border-radius:14px;padding:14px;background:#b3a5cf;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.quiz-done{text-align:center;padding:20px 0}
+.quiz-done h1{font:900 26px/1.15 'Nunito'}
+.quiz-done h1 i{font-family:'Playfair Display';font-weight:600;color:#ac9ac5}
+
 /* === Item 5: Lexicon-open transition — opens BOTTOM TO TOP === */
 .lexicon-transition{position:fixed;inset:0;z-index:99999;background:#fffefd;display:flex;align-items:center;justify-content:center;perspective:1200px;animation:lexicon-fade-in .3s ease both}
 .lexicon-book{position:relative;width:220px;height:290px;transform-style:preserve-3d;animation:lexicon-enter .35s ease both}
