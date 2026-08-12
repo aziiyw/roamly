@@ -99,32 +99,35 @@
 .memory-preview span{font-size:14px;font-weight:800;color:#6a5f8f;background:#efe9f9;border:1px solid #ddd3ef;border-radius:20px;padding:7px 14px}
 .mode-choice-page .back{margin-bottom:18px;font-size:18px}
 
-/* === Item 5: Lexicon-open transition — opens BOTTOM TO TOP === */
-.lexicon-transition{position:fixed;inset:0;z-index:99999;background:#fffefd;display:flex;align-items:center;justify-content:center;perspective:1200px;animation:lexicon-fade-in .3s ease both}
-.lexicon-book{position:relative;width:180px;height:128px;animation:lexicon-enter .35s ease both;filter:drop-shadow(0 10px 16px #927d4c33)}
-.lexicon-spread{position:absolute;inset:0;display:flex;animation:lexicon-spread-in .4s ease .28s both}
-.lexicon-page{flex:1;background:#fffdf7;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px 11px;overflow:hidden}
-.lexicon-page-left{border-radius:7px 0 0 7px;border-right:1px solid #ede4cf}
-.lexicon-page-right{border-radius:0 7px 7px 0;border-left:1px solid #ede4cf}
-.lexicon-page i{display:block;height:2px;background:#e6dcc5;border-radius:1px}
-.lexicon-page-left i:nth-child(1){width:78%}.lexicon-page-left i:nth-child(2){width:56%}.lexicon-page-left i:nth-child(3){width:82%}.lexicon-page-left i:nth-child(4){width:62%}.lexicon-page-left i:nth-child(5){width:46%}
-.lexicon-page-right i:nth-child(1){width:72%}.lexicon-page-right i:nth-child(2){width:52%}.lexicon-page-right i:nth-child(3){width:76%}.lexicon-page-right i:nth-child(4){width:58%}.lexicon-page-right i:nth-child(5){width:42%}
-.lexicon-flip{position:absolute;top:0;right:0;width:50%;height:100%;transform-origin:left center;transform-style:preserve-3d;opacity:0;animation:lexicon-page-flip .72s cubic-bezier(.5,.05,.5,.95) .66s forwards}
-.lexicon-flip-face{position:absolute;inset:0;background:#fffdf7;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px 11px;backface-visibility:hidden;overflow:hidden}
-.lexicon-flip-front{border-radius:0 7px 7px 0;border-left:1px solid #ede4cf}
-.lexicon-flip-back{transform:rotateY(180deg);border-radius:7px 0 0 7px;border-right:1px solid #ede4cf}
-.lexicon-flip-face i{display:block;height:2px;background:#e6dcc5;border-radius:1px}
-.lexicon-flip-front i:nth-child(1){width:70%}.lexicon-flip-front i:nth-child(2){width:50%}.lexicon-flip-front i:nth-child(3){width:74%}.lexicon-flip-front i:nth-child(4){width:56%}.lexicon-flip-front i:nth-child(5){width:40%}
-.lexicon-flip-back i:nth-child(1){width:68%}.lexicon-flip-back i:nth-child(2){width:48%}.lexicon-flip-back i:nth-child(3){width:72%}.lexicon-flip-back i:nth-child(4){width:54%}.lexicon-flip-back i:nth-child(5){width:38%}
-.lexicon-cover{position:absolute;inset:0;border-radius:8px;background:#f6dd98;color:#76633e;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;box-shadow:inset 0 0 0 1px #dcc279,0 4px 12px #927d4c40;transform-origin:left center;animation:lexicon-cover-open .42s cubic-bezier(.22,.75,.2,1) .28s forwards}
-.lexicon-cover::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:2px;border-radius:1px;background:#dcc279;opacity:.75}
-.lexicon-cover .lc-title{font:900 15px/1.1 'Nunito',sans-serif;color:#76633e;letter-spacing:-.3px}
+/* === Item 5: Lexicon-open transition — yellow notebook cover hinges open,
+       three pages cascade from right to left, settling on a clean lined spread === */
+.lexicon-transition{position:fixed;inset:0;z-index:99999;background:#fffefd;display:flex;align-items:center;justify-content:center;perspective:1400px;animation:lexicon-fade-in .3s ease both}
+.lexicon-stage{filter:drop-shadow(0 14px 22px #927d4c44)}
+.lexicon-book{position:relative;width:200px;height:150px;transform-style:preserve-3d;transform:rotate(-3deg);animation:lexicon-enter .4s cubic-bezier(.2,.8,.25,1) both}
+.lexicon-spread{position:absolute;inset:0;display:flex}
+.lexicon-page{flex:1;background:#fffdf7;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px #f0e6cc}
+.lexicon-page-left{border-radius:6px 0 0 6px}
+.lexicon-page-right{border-radius:0 6px 6px 0}
+.lp-margin{position:absolute;left:14%;top:7%;bottom:7%;width:1.5px;background:#e89b9b;opacity:.85;border-radius:1px}
+.lp-lines{position:absolute;left:20%;right:6%;top:9%;bottom:7%;background:repeating-linear-gradient(to bottom,transparent0,transparent 12px,#b6c8d4 12px,#b6c8d4 13.5px);border-radius:2px;opacity:.9}
+.lp-fold{position:absolute;left:0;bottom:0;width:22px;height:22px;pointer-events:none;background:linear-gradient(to top right,transparent calc(50% - .8px),#b89a6a calc(50% - .8px),#b89a6a 50%,transparent 50%),linear-gradient(to top right,#ece0c0 50%,transparent 50%);border-bottom-left-radius:3px}
+.lexicon-flip{position:absolute;top:0;right:0;width:50%;height:100%;transform-origin:left center;transform-style:preserve-3d;overflow:hidden;border-radius:0 6px 6px 0;opacity:0;box-shadow:-2px 0 4px #00000010;will-change:transform,opacity}
+.lexicon-flip-a{transform:translateZ(7px) rotateY(0);animation:lexicon-flip-a .5s cubic-bezier(.5,.05,.5,.95) .7s forwards}
+.lexicon-flip-b{transform:translateZ(3.5px) rotateY(0);animation:lexicon-flip-b .5s cubic-bezier(.5,.05,.5,.95) .82s forwards}
+.lexicon-flip-c{transform:translateZ(0) rotateY(0);animation:lexicon-flip-c .5s cubic-bezier(.5,.05,.5,.95) .94s forwards}
+.lexicon-flip-face{position:absolute;inset:0;background:#fffdf7;backface-visibility:hidden;overflow:hidden;box-shadow:inset 0 0 0 1px #f0e6cc}
+.lexicon-flip-back{transform:rotateY(180deg)}
+.lexicon-flip-back .lp-margin{left:auto;right:14%}
+.lexicon-cover{position:absolute;inset:0;border-radius:7px;background:#f6dd98;color:#76633e;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;box-shadow:inset 0 0 0 1px #dcc279,0 5px 14px #927d4c40;transform-origin:left center;transform:rotateY(0);will-change:transform,opacity;animation:lexicon-cover-open .55s cubic-bezier(.22,.75,.2,1) .25s forwards}
+.lexicon-cover::before{content:'';position:absolute;left:6px;top:7px;bottom:7px;width:2px;border-radius:1px;background:#dcc279;opacity:.75}
+.lexicon-cover .lc-title{font:900 16px/1.1 'Nunito',sans-serif;color:#76633e;letter-spacing:-.3px}
 .lexicon-cover .lc-sub{font:700 7px 'DM Mono',monospace;letter-spacing:1px;color:#a18c5e}
 @keyframes lexicon-fade-in{from{opacity:0}to{opacity:1}}
-@keyframes lexicon-enter{from{opacity:0;transform:scale(.84) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes lexicon-spread-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-@keyframes lexicon-cover-open{0%{opacity:1;transform:rotateY(0) scale(1)}45%{opacity:1;transform:rotateY(-14deg) scale(1.02)}100%{opacity:0;transform:rotateY(-24deg) scale(1.04) translateY(-6px)}}
-@keyframes lexicon-page-flip{0%{opacity:0;transform:rotateY(0deg)}8%{opacity:1}82%{opacity:1;transform:rotateY(-160deg)}100%{opacity:0;transform:rotateY(-170deg)}}
+@keyframes lexicon-enter{0%{opacity:0;transform:rotate(-3deg) scale(.84) translateY(8px)}100%{opacity:1;transform:rotate(-3deg) scale(1) translateY(0)}}
+@keyframes lexicon-cover-open{0%{opacity:1;transform:rotateY(0)}60%{opacity:1;transform:rotateY(-112deg)}100%{opacity:0;transform:rotateY(-178deg)}}
+@keyframes lexicon-flip-a{0%{opacity:0;transform:translateZ(7px) rotateY(0)}8%{opacity:1}88%{opacity:1;transform:translateZ(7px) rotateY(-170deg)}100%{opacity:0;transform:translateZ(7px) rotateY(-178deg)}}
+@keyframes lexicon-flip-b{0%{opacity:0;transform:translateZ(3.5px) rotateY(0)}8%{opacity:1}88%{opacity:1;transform:translateZ(3.5px) rotateY(-170deg)}100%{opacity:0;transform:translateZ(3.5px) rotateY(-178deg)}}
+@keyframes lexicon-flip-c{0%{opacity:0;transform:translateZ(0) rotateY(0)}8%{opacity:1}88%{opacity:1;transform:translateZ(0) rotateY(-170deg)}100%{opacity:0;transform:translateZ(0) rotateY(-178deg)}}
 
 /* === Past-trips notebook list on the Trip page === */
 .past-trips-heading{margin:24px 0 10px}

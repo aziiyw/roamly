@@ -674,23 +674,28 @@ function openLexicon() {
   // Render the vocab page underneath first, so the overlay can fade out onto it.
   state.screen = 'vocab';
   render();
+  // Reusable lined-paper inner content: a red left margin + horizontal ruled lines.
+  // The static left page also gets a small folded corner.
+  const face = '<span class="lp-margin"></span><span class="lp-lines"></span>';
+  const leftFace = face + '<span class="lp-fold"></span>';
+  const flip = (extra = '') => `<div class="lexicon-flip-face lexicon-flip-front">${face}${extra}</div><div class="lexicon-flip-face lexicon-flip-back">${face}${extra}</div>`;
   const overlay = document.createElement('div');
   overlay.className = 'lexicon-transition';
-  overlay.innerHTML = `<div class="lexicon-book">
+  overlay.innerHTML = `<div class="lexicon-stage"><div class="lexicon-book">
     <div class="lexicon-spread">
-      <div class="lexicon-page lexicon-page-left"><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="lexicon-page lexicon-page-right"><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="lexicon-flip">
-        <div class="lexicon-flip-face lexicon-flip-front"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="lexicon-flip-face lexicon-flip-back"><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
+      <div class="lexicon-page lexicon-page-left">${leftFace}</div>
+      <div class="lexicon-page lexicon-page-right">${face}</div>
     </div>
+    <div class="lexicon-flip lexicon-flip-a">${flip()}</div>
+    <div class="lexicon-flip lexicon-flip-b">${flip()}</div>
+    <div class="lexicon-flip lexicon-flip-c">${flip()}</div>
     <div class="lexicon-cover"><span class="lc-title">Phrasebook</span><span class="lc-sub">${data.trip.name.toUpperCase()}</span></div>
-  </div>`;
+  </div></div>`;
   document.body.appendChild(overlay);
   // Fade the overlay away into the vocab page (smooth, no hard cut).
-  setTimeout(() => overlay.classList.add('lexicon-exit'), 1180);
-  setTimeout(() => { overlay.remove(); }, 1630);
+  // Timing budget: cover opens ~.75s, 3-page cascade ~.7s, settle ~.25s, exit fade.
+  setTimeout(() => overlay.classList.add('lexicon-exit'), 1800);
+  setTimeout(() => { overlay.remove(); }, 2280);
 }
 app.addEventListener('input', e => { if(e.target.dataset.input==='query') { state.query=e.target.value; render(); const input=document.querySelector('[data-input="query"]'); input?.focus(); input?.setSelectionRange(state.query.length,state.query.length); } });
 // Restore the active trip, vocab, and scan/streak counters from localStorage so
