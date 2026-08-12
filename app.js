@@ -13,6 +13,62 @@ function findMatchingLangTrip(langCode) {
   return loadPastTrips().find(t => t.langCode === langCode && t.vocab && t.vocab.length > 0);
 }
 
+// === Progress: persist the current trip + vocab + scan/streak counters ===
+// so the dashboard stats reflect real, up-to-date progress across reloads.
+function todayKey(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function saveProgress() {
+  try {
+    localStorage.setItem('roamly_progress', JSON.stringify({
+      trip: data.trip,
+      vocab: data.vocab,
+      scanCount: data.scanCount,
+      streakDays: data.streakDays,
+      lastScanDate: data.lastScanDate
+    }));
+  } catch(e) {}
+}
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('roamly_progress');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+function hydrateProgress() {
+  const saved = loadProgress();
+  if (!saved) return false;
+  if (saved.trip) data.trip = { ...data.trip, ...saved.trip };
+  if (Array.isArray(saved.vocab)) data.vocab = saved.vocab;
+  if (typeof saved.scanCount === 'number') data.scanCount = saved.scanCount;
+  if (typeof saved.streakDays === 'number') data.streakDays = saved.streakDays;
+  if (typeof saved.lastScanDate === 'string') data.lastScanDate = saved.lastScanDate;
+  return true;
+}
+// Call after a successful scan to count it and grow/maintain the day streak.
+function recordScan() {
+  data.scanCount = (data.scanCount || 0) + 1;
+  const today = todayKey();
+  if (data.lastScanDate === today) {
+    // already counted a scan today — keep streak as-is
+  } else if (data.lastScanDate === todayKey(-1)) {
+    data.streakDays = (data.streakDays || 0) + 1;
+  } else {
+    data.streakDays = 1;
+  }
+  data.lastScanDate = today;
+}
+// Derive the three stats shown on the dashboard and trip page from real data.
+function computeStats() {
+  const wordsMet = data.vocab.length;
+  const scans = data.scanCount || 0;
+  const recall = wordsMet ? Math.round(data.vocab.reduce((sum, w) => sum + (typeof w.level === 'number' ? w.level : 0), 0) / wordsMet) : 0;
+  return { wordsMet, scans, recall };
+}
+
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
 const destOption = (d) => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? 'selected' : ''}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`;
@@ -182,7 +238,10 @@ const destinations = [
 const data = {
   trip: { name: 'Spring in Kyoto', place: 'Kyoto, Japan', flag: '🌸', lang: 'Japanese', langCode: 'ja', dates: 'Mar 24 – Apr 7', dateStart: '', dateEnd: '' },
   vocab: [],
-  pastTrips: []
+  pastTrips: [],
+  scanCount: 0,
+  streakDays: 0,
+  lastScanDate: ''
 };
 
 let state = { screen: 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '' };
@@ -351,10 +410,11 @@ function setup() {
     const [city, country, flag, lang, langCode] = btn.dataset.dest.split('|');
     data.trip.place = `${city}, ${country}`; data.trip.flag = flag; data.trip.lang = lang; data.trip.langCode = langCode;
     data.trip.name = data.trip.name || `${city} adventure`;
+    saveProgress();
     search.value = ''; picker.style.display = 'none'; render();
   });
   // Wire up trip name input
-  document.querySelector('[data-field="tripName"]')?.addEventListener('input', (e) => { data.trip.name = e.target.value; });
+  document.querySelector('[data-field="tripName"]')?.addEventListener('input', (e) => { data.trip.name = e.target.value; saveProgress(); });
   // Wire up calendar: hidden until the dates row is tapped; stays open while picking
   const calendarWrap = document.getElementById('calendar-wrap');
   calendarWrap.style.display = 'none';
@@ -401,6 +461,7 @@ function buildCalendar() {
       data.trip.dates = `${fmt(calState.start)} – ${fmt(calState.end)}`;
       const display = document.getElementById('date-display');
       if (display) display.textContent = data.trip.dates;
+      saveProgress();
     }
     buildCalendar();
   }));
@@ -433,9 +494,12 @@ function modeChoice() {
 }
 
 function dashboard() {
- return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">FRIDAY, MARCH 28</p><h1>Ohayō, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>7</b><span>day<br>streak</span></div></div>
+ const { wordsMet, scans, recall } = computeStats();
+ const streak = data.streakDays || 0;
+ const streakUnit = streak === 1 ? 'day' : 'days';
+ return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">FRIDAY, MARCH 28</p><h1>Ohayō, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak" title="${streak}-day streak"><b>${streak}</b><span>${streakUnit}<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
- <div class="stats-grid"><div><strong>24</strong><span>words met</span></div><div><strong>8</strong><span>scans made</span></div><div><strong>71<small>%</small></strong><span>remembered</span></div></div>
+ <div class="stats-grid"><div><strong>${wordsMet}</strong><span>words met</span></div><div><strong>${scans}</strong><span>scans made</span></div><div><strong>${recall}<small>%</small></strong><span>remembered</span></div></div>
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
  <div class="review-card"><div class="review-word"><span>入口</span><small>iriguchi</small></div><div class="review-copy"><b>You've met this one before</b><p>at Nishiki Market · 3 times</p><div class="mini-progress"><i style="width:53%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>
  <div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
@@ -487,6 +551,7 @@ function vocab() {
 
 function trip() {
   const pastTrips = loadPastTrips();
+  const { wordsMet, scans, recall } = computeStats();
   const notebookColors = ['#f6dd98', '#e7e0f1', '#fce4d6', '#dce8d9', '#d6e9f0', '#fde2c4', '#e8dff5', '#d9eed7', '#f7d9e4', '#e4ecd6'];
   const pastTripList = pastTrips.length
     ? `<div class="past-trips">${pastTrips.map((t, i) => {
@@ -498,7 +563,7 @@ function trip() {
         </button>`;
       }).join('')}</div>`
     : `<div class="past-trips empty"><p>Your past trips will turn into lovely little notebooks here.</p></div>`;
-  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>24</strong><span>words<br>collected</span></div><div><strong>8</strong><span>moments<br>scanned</span></div><div><strong>71%</strong><span>recall<br>rate</span></div></div><div class="section-heading past-trips-heading"><div><p class="eyebrow">YOUR LITTLE NOTEBOOKS</p><h2>Past journeys</h2></div></div>${pastTripList}</section>`, 'trip');
+  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${wordsMet}</strong><span>words<br>collected</span></div><div><strong>${scans}</strong><span>moments<br>scanned</span></div><div><strong>${recall}%</strong><span>recall<br>rate</span></div></div><div class="section-heading past-trips-heading"><div><p class="eyebrow">YOUR LITTLE NOTEBOOKS</p><h2>Past journeys</h2></div></div>${pastTripList}</section>`, 'trip');
 }
 
 function quiz() {
@@ -546,6 +611,8 @@ function uploadTravelImage(input, mode) {
       const newWords = (state.analysis.vocabulary || []).map(word => ({ word: word.word, reading: word.reading || '', meaning: word.meaning || '', category: word.category || 'Signs', seen: 1, level: 15, status: 'New', place: data.trip.place }));
       data.vocab = [...newWords, ...data.vocab.filter(existing => !newWords.some(word => word.word === existing.word))];
       saveCurrentTrip();
+      recordScan();
+      saveProgress();
       state.screen = 'result';
     } catch (error) {
       state.scanError = error.message || 'The translation service is unavailable.';
@@ -618,4 +685,8 @@ function openLexicon() {
   setTimeout(() => { overlay.remove(); }, 1630);
 }
 app.addEventListener('input', e => { if(e.target.dataset.input==='query') { state.query=e.target.value; render(); const input=document.querySelector('[data-input="query"]'); input?.focus(); input?.setSelectionRange(state.query.length,state.query.length); } });
+// Restore the active trip, vocab, and scan/streak counters from localStorage so
+// the dashboard always reflects real, up-to-date progress. Returning users
+// land on the dashboard instead of the welcome screen.
+if (hydrateProgress()) state.screen = 'home';
 render();
