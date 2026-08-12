@@ -1,0 +1,72 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Scan Debug</title></head>
+<body>
+<h2>Scan Debug — triggers real upload flow</h2>
+<p>This page loads the real app.js, then simulates an image upload using your screenshot.</p>
+<button id="run">Upload screenshot & scan</button>
+<div id="status" style="font-size:14px;padding:10px;background:#ff0;display:none;"></div>
+<pre id="log" style="background:#f0f0f0;padding:16px;font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;"></pre>
+<div id="app"></div>
+<script src="config.js?v=6"></script>
+<script src="app.js?v=6"></script>
+<script>
+// Override render to also log screen changes
+const origRender = render;
+const log = document.getElementById('log');
+function out(msg) { log.textContent += msg + '\n'; }
+
+document.getElementById('run').addEventListener('click', async () => {
+  log.textContent = '';
+  out('=== Simulating real upload flow ===\n');
+
+  // Fetch the screenshot
+  out('1. Fetching screenshot.png...');
+  const resp = await fetch('screenshot.png');
+  const blob = await resp.blob();
+  out('   got: ' + blob.size + ' bytes');
+
+  // Create a File object (like what a file input would produce)
+  const file = new File([blob], 'screenshot.png', { type: 'image/png' });
+  out('   File created: ' + file.name + ', ' + file.size + ' bytes');
+
+  // Create a fake input element like the app expects
+  const fakeInput = { files: [file], dataset: { uploadMode: 'learn' } };
+
+  // Now call the REAL uploadTravelImage function from app.js
+  out('2. Calling uploadTravelImage(fakeInput, "learn")...');
+  out('   This sets state.screen="loading" and starts the GLM call.');
+  out('   Waiting for result...\n');
+
+  // Monkey-patch render to intercept screen changes
+  let screenHistory = [];
+  window.render = function() {
+    try {
+      const views = { welcome, setup, modeChoice, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+      screenHistory.push(state.screen);
+      out('   [render] screen=' + state.screen + ', analysis=' + (state.analysis ? 'SET' : 'null') + ', error=' + (state.scanError || 'none'));
+      views[state.screen]();
+    } catch (err) {
+      out('   [render] THREW: ' + err.message);
+      out('   ' + (err.stack || '').split('\n').slice(0,3).join('\n   '));
+      throw err;
+    }
+  };
+
+  try {
+    uploadTravelImage(fakeInput, 'learn');
+    // Wait for the async operation to complete
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    out('\n=== Final state ===');
+    out('screen: ' + state.screen);
+    out('analysis: ' + (state.analysis ? JSON.stringify(state.analysis).slice(0,200) : 'null'));
+    out('scanError: ' + (state.scanError || 'none'));
+    out('screen history: ' + screenHistory.join(' → '));
+  } catch (e) {
+    out('\n=== CAUGHT ERROR ===');
+    out(e.message);
+    out(e.stack);
+  }
+});
+</script>
+</body>
+</html>
