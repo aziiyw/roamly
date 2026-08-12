@@ -15,6 +15,8 @@ function findMatchingLangTrip(langCode) {
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
+const destOption = (d) => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? 'selected' : ''}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`;
+
 // Fallback vocab for the quiz when the user hasn't scanned anything yet.
 const starterVocabulary = [
   { word: '出口', reading: 'deguchi', meaning: 'Exit', place: 'Kyoto Station' },
@@ -50,7 +52,131 @@ const destinations = [
   { city: 'Istanbul', country: 'Türkiye', flag: '🕌', lang: 'Turkish', langCode: 'tr' },
   { city: 'Mexico City', country: 'Mexico', flag: '🌮', lang: 'Spanish', langCode: 'es' },
   { city: 'Cairo', country: 'Egypt', flag: '🐫', lang: 'Arabic', langCode: 'ar' },
-  { city: 'Amsterdam', country: 'Netherlands', flag: '🌷', lang: 'Dutch', langCode: 'nl' }
+  { city: 'Amsterdam', country: 'Netherlands', flag: '🌷', lang: 'Dutch', langCode: 'nl' },
+  { city: 'Tokyo', country: 'Japan', flag: '🇯🇵', lang: 'Japanese', langCode: 'ja' },
+  { city: 'Osaka', country: 'Japan', flag: '🇯🇵', lang: 'Japanese', langCode: 'ja' },
+  { city: 'Busan', country: 'South Korea', flag: '🇰🇷', lang: 'Korean', langCode: 'ko' },
+  { city: 'Shanghai', country: 'China', flag: '🇨🇳', lang: 'Mandarin', langCode: 'zh' },
+  { city: 'Beijing', country: 'China', flag: '🇨🇳', lang: 'Mandarin', langCode: 'zh' },
+  { city: 'Hong Kong', country: 'China', flag: '🇭🇰', lang: 'Cantonese', langCode: 'zh' },
+  { city: 'Taipei', country: 'Taiwan', flag: '🇹🇼', lang: 'Mandarin', langCode: 'zh' },
+  { city: 'Chiang Mai', country: 'Thailand', flag: '🇹🇭', lang: 'Thai', langCode: 'th' },
+  { city: 'Singapore', country: 'Singapore', flag: '🇸🇬', lang: 'English', langCode: 'en' },
+  { city: 'Kuala Lumpur', country: 'Malaysia', flag: '🇲🇾', lang: 'Malay', langCode: 'ms' },
+  { city: 'Bali', country: 'Indonesia', flag: '🇮🇩', lang: 'Indonesian', langCode: 'id' },
+  { city: 'Jakarta', country: 'Indonesia', flag: '🇮🇩', lang: 'Indonesian', langCode: 'id' },
+  { city: 'Hanoi', country: 'Vietnam', flag: '🇻🇳', lang: 'Vietnamese', langCode: 'vi' },
+  { city: 'Ho Chi Minh City', country: 'Vietnam', flag: '🇻🇳', lang: 'Vietnamese', langCode: 'vi' },
+  { city: 'Manila', country: 'Philippines', flag: '🇵🇭', lang: 'Filipino', langCode: 'tl' },
+  { city: 'Phnom Penh', country: 'Cambodia', flag: '🇰🇭', lang: 'Khmer', langCode: 'km' },
+  { city: 'Luang Prabang', country: 'Laos', flag: '🇱🇦', lang: 'Lao', langCode: 'lo' },
+  { city: 'Yangon', country: 'Myanmar', flag: '🇲🇲', lang: 'Burmese', langCode: 'my' },
+  { city: 'Kathmandu', country: 'Nepal', flag: '🇳🇵', lang: 'Nepali', langCode: 'ne' },
+  { city: 'New Delhi', country: 'India', flag: '🇮🇳', lang: 'Hindi', langCode: 'hi' },
+  { city: 'Mumbai', country: 'India', flag: '🇮🇳', lang: 'Hindi', langCode: 'hi' },
+  { city: 'Jaipur', country: 'India', flag: '🇮🇳', lang: 'Hindi', langCode: 'hi' },
+  { city: 'Dubai', country: 'UAE', flag: '🇦🇪', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Abu Dhabi', country: 'UAE', flag: '🇦🇪', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Doha', country: 'Qatar', flag: '🇶🇦', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Tel Aviv', country: 'Israel', flag: '🇮🇱', lang: 'Hebrew', langCode: 'he' },
+  { city: 'Jerusalem', country: 'Israel', flag: '🇮🇱', lang: 'Hebrew', langCode: 'he' },
+  { city: 'Antalya', country: 'Türkiye', flag: '🇹🇷', lang: 'Turkish', langCode: 'tr' },
+  { city: 'Amman', country: 'Jordan', flag: '🇯🇴', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Beirut', country: 'Lebanon', flag: '🇱🇧', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Muscat', country: 'Oman', flag: '🇴🇲', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Tbilisi', country: 'Georgia', flag: '🇬🇪', lang: 'Georgian', langCode: 'ka' },
+  { city: 'Yerevan', country: 'Armenia', flag: '🇦🇲', lang: 'Armenian', langCode: 'hy' },
+  { city: 'Baku', country: 'Azerbaijan', flag: '🇦🇿', lang: 'Azerbaijani', langCode: 'az' },
+  { city: 'Almaty', country: 'Kazakhstan', flag: '🇰🇿', lang: 'Kazakh', langCode: 'kk' },
+  { city: 'Ulaanbaatar', country: 'Mongolia', flag: '🇲🇳', lang: 'Mongolian', langCode: 'mn' },
+  { city: 'Nice', country: 'France', flag: '🇫🇷', lang: 'French', langCode: 'fr' },
+  { city: 'Florence', country: 'Italy', flag: '🇮🇹', lang: 'Italian', langCode: 'it' },
+  { city: 'Venice', country: 'Italy', flag: '🇮🇹', lang: 'Italian', langCode: 'it' },
+  { city: 'Milan', country: 'Italy', flag: '🇮🇹', lang: 'Italian', langCode: 'it' },
+  { city: 'Madrid', country: 'Spain', flag: '🇪🇸', lang: 'Spanish', langCode: 'es' },
+  { city: 'Seville', country: 'Spain', flag: '🇪🇸', lang: 'Spanish', langCode: 'es' },
+  { city: 'Granada', country: 'Spain', flag: '🇪🇸', lang: 'Spanish', langCode: 'es' },
+  { city: 'Porto', country: 'Portugal', flag: '🇵🇹', lang: 'Portuguese', langCode: 'pt' },
+  { city: 'Munich', country: 'Germany', flag: '🇩🇪', lang: 'German', langCode: 'de' },
+  { city: 'Hamburg', country: 'Germany', flag: '🇩🇪', lang: 'German', langCode: 'de' },
+  { city: 'Rotterdam', country: 'Netherlands', flag: '🇳🇱', lang: 'Dutch', langCode: 'nl' },
+  { city: 'Brussels', country: 'Belgium', flag: '🇧🇪', lang: 'French', langCode: 'fr' },
+  { city: 'Bruges', country: 'Belgium', flag: '🇧🇪', lang: 'Dutch', langCode: 'nl' },
+  { city: 'Vienna', country: 'Austria', flag: '🇦🇹', lang: 'German', langCode: 'de' },
+  { city: 'Prague', country: 'Czechia', flag: '🇨🇿', lang: 'Czech', langCode: 'cs' },
+  { city: 'Budapest', country: 'Hungary', flag: '🇭🇺', lang: 'Hungarian', langCode: 'hu' },
+  { city: 'Warsaw', country: 'Poland', flag: '🇵🇱', lang: 'Polish', langCode: 'pl' },
+  { city: 'Krakow', country: 'Poland', flag: '🇵🇱', lang: 'Polish', langCode: 'pl' },
+  { city: 'Athens', country: 'Greece', flag: '🇬🇷', lang: 'Greek', langCode: 'el' },
+  { city: 'Santorini', country: 'Greece', flag: '🇬🇷', lang: 'Greek', langCode: 'el' },
+  { city: 'Copenhagen', country: 'Denmark', flag: '🇩🇰', lang: 'Danish', langCode: 'da' },
+  { city: 'Stockholm', country: 'Sweden', flag: '🇸🇪', lang: 'Swedish', langCode: 'sv' },
+  { city: 'Oslo', country: 'Norway', flag: '🇳🇴', lang: 'Norwegian', langCode: 'no' },
+  { city: 'Bergen', country: 'Norway', flag: '🇳🇴', lang: 'Norwegian', langCode: 'no' },
+  { city: 'Helsinki', country: 'Finland', flag: '🇫🇮', lang: 'Finnish', langCode: 'fi' },
+  { city: 'Riga', country: 'Latvia', flag: '🇱🇻', lang: 'Latvian', langCode: 'lv' },
+  { city: 'Tallinn', country: 'Estonia', flag: '🇪🇪', lang: 'Estonian', langCode: 'et' },
+  { city: 'Vilnius', country: 'Lithuania', flag: '🇱🇹', lang: 'Lithuanian', langCode: 'lt' },
+  { city: 'Dublin', country: 'Ireland', flag: '🇮🇪', lang: 'Irish', langCode: 'ga' },
+  { city: 'Edinburgh', country: 'Scotland', flag: '🏴', lang: 'English', langCode: 'en' },
+  { city: 'London', country: 'England', flag: '🇬🇧', lang: 'English', langCode: 'en' },
+  { city: 'Zurich', country: 'Switzerland', flag: '🇨🇭', lang: 'German', langCode: 'de' },
+  { city: 'Geneva', country: 'Switzerland', flag: '🇨🇭', lang: 'French', langCode: 'fr' },
+  { city: 'Interlaken', country: 'Switzerland', flag: '🇨🇭', lang: 'German', langCode: 'de' },
+  { city: 'Reykjavik', country: 'Iceland', flag: '🇮🇸', lang: 'Icelandic', langCode: 'is' },
+  { city: 'Zagreb', country: 'Croatia', flag: '🇭🇷', lang: 'Croatian', langCode: 'hr' },
+  { city: 'Split', country: 'Croatia', flag: '🇭🇷', lang: 'Croatian', langCode: 'hr' },
+  { city: 'Dubrovnik', country: 'Croatia', flag: '🇭🇷', lang: 'Croatian', langCode: 'hr' },
+  { city: 'Ljubljana', country: 'Slovenia', flag: '🇸🇮', lang: 'Slovene', langCode: 'sl' },
+  { city: 'Bratislava', country: 'Slovakia', flag: '🇸🇰', lang: 'Slovak', langCode: 'sk' },
+  { city: 'Belgrade', country: 'Serbia', flag: '🇷🇸', lang: 'Serbian', langCode: 'sr' },
+  { city: 'Sarajevo', country: 'Bosnia and Herzegovina', flag: '🇧🇦', lang: 'Bosnian', langCode: 'bs' },
+  { city: 'Skopje', country: 'North Macedonia', flag: '🇲🇰', lang: 'Macedonian', langCode: 'mk' },
+  { city: 'Tirana', country: 'Albania', flag: '🇦🇱', lang: 'Albanian', langCode: 'sq' },
+  { city: 'Sofia', country: 'Bulgaria', flag: '🇧🇬', lang: 'Bulgarian', langCode: 'bg' },
+  { city: 'Bucharest', country: 'Romania', flag: '🇷🇴', lang: 'Romanian', langCode: 'ro' },
+  { city: 'Kyiv', country: 'Ukraine', flag: '🇺🇦', lang: 'Ukrainian', langCode: 'uk' },
+  { city: 'Moscow', country: 'Russia', flag: '🇷🇺', lang: 'Russian', langCode: 'ru' },
+  { city: 'Saint Petersburg', country: 'Russia', flag: '🇷🇺', lang: 'Russian', langCode: 'ru' },
+  { city: 'Marrakech', country: 'Morocco', flag: '🇲🇦', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Tunis', country: 'Tunisia', flag: '🇹🇳', lang: 'Arabic', langCode: 'ar' },
+  { city: 'Accra', country: 'Ghana', flag: '🇬🇭', lang: 'English', langCode: 'en' },
+  { city: 'Lagos', country: 'Nigeria', flag: '🇳🇬', lang: 'English', langCode: 'en' },
+  { city: 'Nairobi', country: 'Kenya', flag: '🇰🇪', lang: 'Swahili', langCode: 'sw' },
+  { city: 'Zanzibar', country: 'Tanzania', flag: '🇹🇿', lang: 'Swahili', langCode: 'sw' },
+  { city: 'Cape Town', country: 'South Africa', flag: '🇿🇦', lang: 'English', langCode: 'en' },
+  { city: 'Addis Ababa', country: 'Ethiopia', flag: '🇪🇹', lang: 'Amharic', langCode: 'am' },
+  { city: 'Dakar', country: 'Senegal', flag: '🇸🇳', lang: 'French', langCode: 'fr' },
+  { city: 'Cancun', country: 'Mexico', flag: '🇲🇽', lang: 'Spanish', langCode: 'es' },
+  { city: 'Oaxaca', country: 'Mexico', flag: '🇲🇽', lang: 'Spanish', langCode: 'es' },
+  { city: 'New York', country: 'USA', flag: '🇺🇸', lang: 'English', langCode: 'en' },
+  { city: 'Los Angeles', country: 'USA', flag: '🇺🇸', lang: 'English', langCode: 'en' },
+  { city: 'San Francisco', country: 'USA', flag: '🇺🇸', lang: 'English', langCode: 'en' },
+  { city: 'Miami', country: 'USA', flag: '🇺🇸', lang: 'English', langCode: 'en' },
+  { city: 'Honolulu', country: 'USA', flag: '🇺🇸', lang: 'English', langCode: 'en' },
+  { city: 'Vancouver', country: 'Canada', flag: '🇨🇦', lang: 'English', langCode: 'en' },
+  { city: 'Toronto', country: 'Canada', flag: '🇨🇦', lang: 'English', langCode: 'en' },
+  { city: 'Montreal', country: 'Canada', flag: '🇨🇦', lang: 'French', langCode: 'fr' },
+  { city: 'Quebec City', country: 'Canada', flag: '🇨🇦', lang: 'French', langCode: 'fr' },
+  { city: 'Rio de Janeiro', country: 'Brazil', flag: '🇧🇷', lang: 'Portuguese', langCode: 'pt' },
+  { city: 'Sao Paulo', country: 'Brazil', flag: '🇧🇷', lang: 'Portuguese', langCode: 'pt' },
+  { city: 'Buenos Aires', country: 'Argentina', flag: '🇦🇷', lang: 'Spanish', langCode: 'es' },
+  { city: 'Cusco', country: 'Peru', flag: '🇵🇪', lang: 'Spanish', langCode: 'es' },
+  { city: 'Lima', country: 'Peru', flag: '🇵🇪', lang: 'Spanish', langCode: 'es' },
+  { city: 'Santiago', country: 'Chile', flag: '🇨🇱', lang: 'Spanish', langCode: 'es' },
+  { city: 'Bogota', country: 'Colombia', flag: '🇨🇴', lang: 'Spanish', langCode: 'es' },
+  { city: 'Medellin', country: 'Colombia', flag: '🇨🇴', lang: 'Spanish', langCode: 'es' },
+  { city: 'Cartagena', country: 'Colombia', flag: '🇨🇴', lang: 'Spanish', langCode: 'es' },
+  { city: 'Havana', country: 'Cuba', flag: '🇨🇺', lang: 'Spanish', langCode: 'es' },
+  { city: 'Quito', country: 'Ecuador', flag: '🇪🇨', lang: 'Spanish', langCode: 'es' },
+  { city: 'Guatemala City', country: 'Guatemala', flag: '🇬🇹', lang: 'Spanish', langCode: 'es' },
+  { city: 'San Jose', country: 'Costa Rica', flag: '🇨🇷', lang: 'Spanish', langCode: 'es' },
+  { city: 'Panama City', country: 'Panama', flag: '🇵🇦', lang: 'Spanish', langCode: 'es' },
+  { city: 'Sydney', country: 'Australia', flag: '🇦🇺', lang: 'English', langCode: 'en' },
+  { city: 'Melbourne', country: 'Australia', flag: '🇦🇺', lang: 'English', langCode: 'en' },
+  { city: 'Auckland', country: 'New Zealand', flag: '🇳🇿', lang: 'English', langCode: 'en' },
+  { city: 'Queenstown', country: 'New Zealand', flag: '🇳🇿', lang: 'English', langCode: 'en' },
+  { city: 'Suva', country: 'Fiji', flag: '🇫🇯', lang: 'English', langCode: 'en' }
 ];
 
 const data = {
@@ -203,22 +329,30 @@ function setup() {
   app.innerHTML = `<section class="setup-page">
    <button class="back" data-action="welcome">←</button><div class="setup-head"><p class="eyebrow">FIRST, LET'S SET THE SCENE</p><h1>Where are you<br><i>roaming?</i></h1></div>
    <div class="place-card" id="dest-toggle"><div class="place-flag">${data.trip.flag}</div><div><span>Destination</span><strong>${data.trip.place}</strong></div>${icon('arrow')}</div>
-   <div class="dest-picker" id="dest-picker">${destinations.map(d => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? 'selected' : ''}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`).join('')}</div>
+   <div class="dest-picker" id="dest-picker"><input class="dest-search" id="dest-search" type="text" placeholder="Type a city…" autocomplete="off"><div class="dest-list" id="dest-list">${destinations.map(d => destOption(d)).join('')}</div><p class="dest-hint">or pick from a few favourites below</p></div>
    <div class="form-row"><div><label>Trip name</label><input value="${data.trip.name}" data-field="tripName" /></div><div><label>Dates</label><div class="date-display" id="date-display">${data.trip.dates || 'Tap to choose dates'}</div></div></div>
    <div class="calendar-wrap" id="calendar-wrap"></div>
-   <div class="memory-note"><div>♡</div><p>We'll keep every word you meet here in one lovely little Lexicon.</p></div>
+   <div class="memory-note"><div>♡</div><p>We'll keep every word you meet here in one lovely little Phrasebook.</p></div>
    <button class="primary full" data-action="modeChoice">Start this chapter <span>${icon('arrow')}</span></button>
   </section>`;
-  // Wire up destination picker
+  // Wire up destination picker: search-as-you-type filter over every city
   const picker = document.getElementById('dest-picker');
+  const search = document.getElementById('dest-search');
   picker.style.display = 'none';
-  document.getElementById('dest-toggle').addEventListener('click', () => { picker.style.display = picker.style.display === 'none' ? 'grid' : 'none'; });
-  picker.querySelectorAll('[data-dest]').forEach(btn => btn.addEventListener('click', (e) => {
-    const [city, country, flag, lang, langCode] = e.currentTarget.dataset.dest.split('|');
+  document.getElementById('dest-toggle').addEventListener('click', () => { picker.style.display = picker.style.display === 'none' ? 'block' : 'none'; if (picker.style.display !== 'none') search.focus(); });
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    const matches = destinations.filter(d => d.city.toLowerCase().includes(q) || d.country.toLowerCase().includes(q) || d.lang.toLowerCase().includes(q));
+    document.getElementById('dest-list').innerHTML = matches.map(destOption).join('') || '<p class="dest-hint">No cities match — try another spelling</p>';
+  });
+  picker.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-dest]');
+    if (!btn) return;
+    const [city, country, flag, lang, langCode] = btn.dataset.dest.split('|');
     data.trip.place = `${city}, ${country}`; data.trip.flag = flag; data.trip.lang = lang; data.trip.langCode = langCode;
     data.trip.name = data.trip.name || `${city} adventure`;
-    picker.style.display = 'none'; render();
-  }));
+    search.value = ''; picker.style.display = 'none'; render();
+  });
   // Wire up trip name input
   document.querySelector('[data-field="tripName"]')?.addEventListener('input', (e) => { data.trip.name = e.target.value; });
   // Wire up calendar
@@ -316,14 +450,14 @@ function result() {
   <div class="source-preview uploaded-preview" style="background-image:linear-gradient(#173b3d88,#173b3d88),url('${state.uploadedImage}')"><span class="upload-label">Your scan</span>${scan.vocabulary?.slice(0,3).map(v=>`<i class="live-highlight" style="left:${(v.box?.x||0)/10}%;top:${(v.box?.y||0)/10}%;width:${(v.box?.width||200)/10}%;height:${(v.box?.height||80)/10}%"><b>${v.word}</b></i>`).join('')}</div>
   <div class="translation"><p class="eyebrow">YOU'RE LOOKING AT</p><h2>${scan.translation}</h2><p class="reading">${scan.detectedText} <span>${scan.romanisation || ''}</span><button>♬</button></p><p class="natural">${scan.naturalNote}</p></div>
   ${isLearn ? learningPanel(firstWord) : `<div class="translate-note"><span>✦</span><p><b>Sounds more natural:</b> "${scan.translation}"</p></div>`}
-  <div class="notebook-nudge"><span>✦</span><p><b>Very cute first meeting!</b><small>${firstWord.word} is now tucked into your Lexicon.</small></p></div>
-  <button class="notebook-cta full" data-action="vocab"><span class="cta-book">▤</span> Open your Lexicon <span>→</span></button>
+  <div class="notebook-nudge"><span>✦</span><p><b>Very cute first meeting!</b><small>${firstWord.word} is now tucked into your Phrasebook.</small></p></div>
+  <button class="notebook-cta full" data-action="vocab"><span class="cta-book">▤</span> Open your Phrasebook <span>→</span></button>
   <button class="text-scan-again" data-action="scan">${icon('camera')} Scan something else</button>
  </section>`, 'scan');
 }
 
 function loading() {
-  app.innerHTML = `<section class="loading-page"><div class="loading-photo" ${state.uploadedImage ? `style="background-image:url('${state.uploadedImage}')"` : ''}></div><div class="scan-orbit"><i></i><i></i><i></i></div><p class="eyebrow">YOUR TRAVEL AI IS LOOKING</p><h1>Finding the words<br>worth <i>keeping.</i></h1><p>Reading the sign, translating naturally, and picking out useful travel vocabulary.</p><div class="loading-steps"><div class="loading-roller"><span>Reading text</span><span>Translating</span><span>Choosing helpful words</span></div></div></section>`;
+  app.innerHTML = `<section class="loading-page"><div class="loading-photo" ${state.uploadedImage ? `style="background-image:url('${state.uploadedImage}')"` : ''}></div><div class="scan-orbit"><i></i><i></i><i></i></div><p class="eyebrow">YOUR TRAVEL AI IS LOOKING</p><h1>Finding the words<br>worth <i>keeping.</i></h1><p>Reading the sign, translating naturally, and picking out useful travel vocabulary.</p></section>`;
 }
 
 function scanError() { return shell(`<section class="page scan-error"><div class="error-orb">!</div><p class="eyebrow">WE COULDN'T READ THAT ONE</p><h1>Let's give it<br>another <i>try.</i></h1><p>${state.scanError || 'Make sure a valid Z.AI key is set in config.js, then try a clear photo.'}</p><button class="primary full" data-action="scan">${icon('camera')} Try another photo</button></section>`, 'scan'); }
@@ -335,7 +469,7 @@ function learningPanel(word) { return `<div class="learning-panel"><div class="s
 
 function vocab() {
  const list = data.vocab.filter(v => (state.category === 'All' || v.category === state.category) && `${v.word} ${v.meaning}`.toLowerCase().includes(state.query.toLowerCase()));
- return shell(`<section class="page vocab-page"><div class="vocab-head"><div class="vocab-head-row"><div><p class="eyebrow">YOUR LEXICON</p><h1>Words you've<br><i>met.</i></h1><p>Collected around ${data.trip.place}</p></div><button class="quiz-fab" data-action="quiz">${icon('spark')} Test yourself</button></div></div><div class="search"><span>${icon('search')}</span><input placeholder="Find a word" value="${state.query}" data-input="query"><button>${icon('x')}</button></div>
+ return shell(`<section class="page vocab-page"><div class="vocab-head"><div class="vocab-head-row"><div><p class="eyebrow">YOUR PHRASEBOOK</p><h1>Words you've<br><i>met.</i></h1><p>Collected around ${data.trip.place}</p></div><button class="quiz-fab" data-action="quiz">${icon('spark')} Test yourself</button></div></div><div class="search"><span>${icon('search')}</span><input placeholder="Find a word" value="${state.query}" data-input="query"><button>${icon('x')}</button></div>
  <div class="notebook"><div class="notebook-rings"><i></i><i></i><i></i><i></i></div><div class="notebook-cover"><span>✦</span><p>KYOTO TRIP</p><b>2026</b><small>TRAVEL WORDS</small></div><div class="notebook-pages"><div class="page-tabs">${['All','Food','Transport','Directions','Shopping'].map(c=>`<button class="${state.category===c?'selected':''}" data-category="${c}">${c}</button>`).join('')}</div><div class="page-title"><span>${state.category==='All'?'EVERYTHING I\'VE MET':state.category.toUpperCase()}</span><b>${list.length} little ${list.length===1?'word':'words'}</b></div><div class="word-list">${list.map(v => `<article class="vocab-word"><div class="word-main"><b>${v.word}</b><span>${v.reading}</span></div><div class="word-detail"><strong>${v.meaning}</strong><p>First met at ${v.place} <span>♡</span></p><div class="word-footer"><span class="status ${v.status.replace(' ','-').toLowerCase()}">${v.status}</span><span>seen ${v.seen}×</span></div></div><div class="level"><i style="height:${v.level}%"></i></div></article>`).join('')}</div></div></div>
  </section>`, 'vocab');
 }
@@ -349,7 +483,7 @@ function quiz() {
  const q = state.quiz;
  const word = pool[q.order[q.idx]];
  if (!word) { // finished
-   return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-done"><div class="quiz-flower">✦</div><p class="eyebrow">ALL DONE</p><h1>${q.score} out of ${q.order.length}<br><i>nice work!</i></h1><p>You remembered ${q.score} ${q.score===1?'word':'words'} this round.</p><button class="primary full" data-action="quizRestart">${icon('spark')} Quiz me again</button><button class="text-scan-again" data-action="vocab">Back to my Lexicon</button></div></section>`, 'home');
+   return shell(`<section class="page quiz-page"><button class="back" data-action="home">←</button><div class="quiz-done"><div class="quiz-flower">✦</div><p class="eyebrow">ALL DONE</p><h1>${q.score} out of ${q.order.length}<br><i>nice work!</i></h1><p>You remembered ${q.score} ${q.score===1?'word':'words'} this round.</p><button class="primary full" data-action="quizRestart">${icon('spark')} Quiz me again</button><button class="text-scan-again" data-action="vocab">Back to my Phrasebook</button></div></section>`, 'home');
  }
  // Generate 3 options: correct + 2 distractors
  const distractors = pool.filter((_, i) => !q.order.includes(i) || i !== q.order[q.idx]).map(w => w.meaning).filter(Boolean);
@@ -403,7 +537,7 @@ app.addEventListener('click', e => {
   if (!target) return;
   if (target.dataset.category) { state.category = target.dataset.category; render(); return; }
   const a = target.dataset.action;
-  // Play the Lexicon-opening animation before showing the vocab page
+  // Play the Phrasebook-opening animation before showing the vocab page
   if (a === 'vocab') { openLexicon(); return; }
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
   if (a === 'learn'||a==='translate') { state.mode=a; state.screen='scan'; }
@@ -416,21 +550,26 @@ app.addEventListener('click', e => {
   render();
 });
 
-// Plays the animated Lexicon-opening transition (bottom-to-top), then shows vocab.
+// Plays the animated Phrasebook-opening transition (bottom-to-top), then shows vocab.
 function openLexicon() {
+  // Render the vocab page underneath first, so the overlay can fade out onto it.
+  state.screen = 'vocab';
+  render();
   const overlay = document.createElement('div');
   overlay.className = 'lexicon-transition';
   overlay.innerHTML = `<div class="lexicon-book">
     <div class="lexicon-pages-reveal"><i></i><i></i><i></i><i></i></div>
     <div class="lexicon-cover-bottom">
       <span class="lc-icon">✦</span>
-      <span class="lc-title">Lexicon</span>
+      <span class="lc-title">Phrasebook</span>
       <span class="lc-sub">${data.trip.name.toUpperCase()}</span>
     </div>
     <div class="lexicon-hinge"></div>
   </div>`;
   document.body.appendChild(overlay);
-  setTimeout(() => { overlay.remove(); state.screen = 'vocab'; render(); }, 1800);
+  // Fade the overlay away into the vocab page (smooth, no hard cut).
+  setTimeout(() => overlay.classList.add('lexicon-exit'), 1180);
+  setTimeout(() => { overlay.remove(); }, 1630);
 }
 app.addEventListener('input', e => { if(e.target.dataset.input==='query') { state.query=e.target.value; render(); const input=document.querySelector('[data-input="query"]'); input?.focus(); input?.setSelectionRange(state.query.length,state.query.length); } });
 render();
