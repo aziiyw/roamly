@@ -1,3 +1,12 @@
+/* === Fix: today-decoration behind text === */
+.today-card h2{position:relative;z-index:2}
+.today-card .eyebrow{position:relative;z-index:2}
+.today-decoration{z-index:0!important}
+
+/* === New trip button === */
+.new-trip-btn{margin:8px 0 20px;font-size:13px;gap:8px}
+.new-trip-btn svg{width:16px}
+
 /* === Fixed bottom nav: stays pinned to screen, content scrolls above === */
 .app-shell{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
