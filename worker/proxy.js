@@ -1,21 +1,4 @@
-/**
- * Roamly GLM Proxy — Cloudflare Worker
- *
- * This hides your Z.AI API key so visitors can use Roamly without seeing it.
- * The browser calls THIS worker; the worker adds the key and calls GLM.
- *
- * Deploy:
- * 1. Go to https://dash.cloudflare.com → Workers & Pages → Create Worker
- * 2. Name it "roamly-proxy", paste this code, click Deploy
- * 3. Go to Settings → Variables → add GLM_API_KEY with your Z.AI key
- * 4. Copy the worker URL (e.g. https://roamly-proxy.your-subdomain.workers.dev)
- * 5. In Roamly's config.js, set:
- *      glmProxyUrl: 'https://roamly-proxy.your-subdomain.workers.dev/api/analyze'
- *      glmApiKey: ''   (leave empty — the worker has the key now)
- * 6. Push to GitHub. Your key is now hidden from the browser!
- */
-
-const SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
+const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
 {
   "detectedText":"...",
   "translation":"...",
@@ -29,7 +12,6 @@ Choose at most 5 useful, common travel words. Coordinates must be normalized 0�
 
 export default {
   async fetch(request, env) {
-    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
@@ -39,21 +21,17 @@ export default {
         },
       });
     }
-
     if (request.method !== 'POST') {
       return json({ error: 'Method not allowed' }, 405);
     }
-
     if (!env.GLM_API_KEY) {
       return json({ error: 'GLM_API_KEY is not set on the worker.' }, 500);
     }
-
     try {
       const { image } = await request.json();
       if (!image || !image.startsWith('data:image/')) {
         return json({ error: 'Please upload an image.' }, 400);
       }
-
       const glmResp = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
         method: 'POST',
         headers: {
@@ -75,7 +53,11 @@ export default {
       });
 
       if (!glmResp.ok) {
-        return json({ error: `GLM request failed (${glmResp.status})` }, 502);
+        // Pass through the EXACT Z.AI error so we can see which limit was hit
+        const errBody = await glmResp.text();
+        let detail = errBody;
+        try { detail = JSON.parse(errBody)?.error?.message || errBody; } catch(e) {}
+        return json({ error: `GLM error (${glmResp.status}): ${detail}` }, 502);
       }
 
       const glmData = await glmResp.json();
