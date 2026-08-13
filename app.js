@@ -15,6 +15,20 @@ function findMatchingLangTrip(langCode) {
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
+// Greetings in different languages, keyed by langCode
+const greetings = {
+  ja: 'Ohayō', fr: 'Bonjour', it: 'Ciao', es: 'Hola', ko: 'Annyeong', th: 'Sawadee',
+  pt: 'Olá', de: 'Hallo', tr: 'Merhaba', ar: 'Marhaba', nl: 'Hallo', zh: 'Nǐ hǎo',
+  vi: 'Xin chào', ru: 'Privet', el: 'Yassou', sv: 'Hej', pl: 'Cześć', cs: 'Ahoj',
+  hu: 'Szia', ro: 'Salut', da: 'Hej', fi: 'Hei', tl: 'Kamusta', ms: 'Halo',
+  id: 'Halo', hi: 'Namaste', bn: 'Nomoskar', ur: 'Assalam', fa: 'Salam', he: 'Shalom',
+  uk: 'Pryvit', ca: 'Hola', ga: 'Dia duit', is: 'Halló', 'no': 'Hei', et: 'Tere',
+  lv: 'Sveiki', lt: 'Labas', sk: 'Ahoj', sl: 'Živjo', hr: 'Bok', sr: 'Ćao',
+  bg: 'Zdravei', mk: 'Zdravo', sq: 'Përshëndetje', eu: 'Kaixo', cy: 'Sut mae',
+  hy: 'Barev', az: 'Salam', kk: 'Sälem', mn: 'Sain bainuu', ka: 'Gamarjoba', en: 'Hello'
+};
+function getGreeting() { return greetings[data.trip.langCode] || greetings.en; }
+
 const destOption = (d) => `<button class="dest-option ${`${d.city}, ${d.country}` === data.trip.place ? 'selected' : ''}" data-dest="${d.city}|${d.country}|${d.flag}|${d.lang}|${d.langCode}"><span class="dest-flag">${d.flag}</span><span class="dest-name"><b>${d.city}</b><small>${d.country} · ${d.lang}</small></span></button>`;
 
 // Fallback vocab for the quiz when the user hasn't scanned anything yet.
@@ -464,13 +478,24 @@ function modeChoice() {
 }
 
 function dashboard() {
- return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">FRIDAY, MARCH 28</p><h1>Ohayō, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>7</b><span>day<br>streak</span></div></div>
+ const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+ const wordCount = data.vocab.length;
+ const scanCount = data.vocab.length > 0 ? Math.max(1, Math.ceil(wordCount / 2)) : 0;
+ const masteredCount = data.vocab.filter(v => v.level >= 70).length;
+ const recallRate = wordCount > 0 ? Math.round((masteredCount / wordCount) * 100) : 0;
+ const streak = Math.max(1, Math.min(wordCount + 1, 30));
+ // Pick the most-seen word for the review card, or hide if no vocab
+ const reviewWord = data.vocab.length > 0 ? [...data.vocab].sort((a,b) => (b.seen||1) - (a.seen||1))[0] : null;
+ const reviewCard = reviewWord ? `<div class="review-card"><div class="review-word"><span>${reviewWord.word}</span><small>${reviewWord.reading || ''}</small></div><div class="review-copy"><b>You've met this one before</b><p>at ${reviewWord.place || data.trip.place.split(',')[0]} · ${reviewWord.seen || 1} times</p><div class="mini-progress"><i style="width:${Math.min(100, (reviewWord.level || 15))}%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>` : `<div class="review-card"><div class="review-word"><span>✦</span><small>start</small></div><div class="review-copy"><b>No words yet</b><p>Scan a sign or menu to start your collection</p></div><button class="round-btn" data-action="scan">${icon('arrow')}</button></div>`;
+ // Recent trail: show the most recent words scanned, or empty state
+ const recentTrail = data.vocab.length > 0 ? `<div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
+ ${data.vocab.slice(0, 3).map(v => `<div class="trail"><div class="trail-photo market">${v.word.slice(0, 3)}</div><div><b>${v.meaning || v.word}</b><p>at ${v.place || data.trip.place.split(',')[0]}</p></div><span>${v.category || 'Signs'}</span></div>`).join('')}` : '';
+ return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">${today}</p><h1>${getGreeting()}, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>${streak}</b><span>word<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
- <div class="stats-grid"><div><strong>24</strong><span>words met</span></div><div><strong>8</strong><span>scans made</span></div><div><strong>71<small>%</small></strong><span>remembered</span></div></div>
+ <div class="stats-grid"><div><strong>${wordCount}</strong><span>words met</span></div><div><strong>${scanCount}</strong><span>scans made</span></div><div><strong>${recallRate}<small>%</small></strong><span>remembered</span></div></div>
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
- <div class="review-card"><div class="review-word"><span>入口</span><small>iriguchi</small></div><div class="review-copy"><b>You've met this one before</b><p>at Nishiki Market · 3 times</p><div class="mini-progress"><i style="width:53%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>
- <div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
- <div class="trail"><div class="trail-photo market">おすすめ</div><div><b>Morning at Kissa Kōyō</b><p>3 new words · 10:42 am</p></div><span>Food</span></div>
+ ${reviewCard}
+ ${recentTrail}
  </section>`, 'home');
 }
 
@@ -528,7 +553,7 @@ function trip() {
            <span class="pt-arrow">${icon('arrow')}</span>
          </button>`).join('')}</div>`
     : `<div class="return-card"><span>✦</span><div><p class="eyebrow">YOUR PHRASEBOOKS</p><h2>Past trips will gather here.</h2><p>Scan a few words on this trip and it'll be saved as a little notebook for next time.</p></div></div>`;
-  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div>${pastList}</section>`, 'trip'); }
+  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div><button class="primary full new-trip-btn" data-action="newTrip">${icon('spark')} Start a new trip <span>→</span></button>${pastList}</section>`, 'trip'); }
 
 function quiz() {
  // Build quiz questions from saved vocab; fall back to starter set if empty
@@ -592,6 +617,8 @@ app.addEventListener('click', e => {
   if (!target) return;
   if (target.dataset.category) { state.category = target.dataset.category; render(); return; }
   const a = target.dataset.action;
+  // Save current trip as past, then start fresh
+  if (a === 'newTrip') { saveCurrentTrip(); data.vocab = []; state.quiz = null; state.screen = 'setup'; render(); return; }
   // Play the Phrasebook-opening animation before showing the vocab page
   if (a === 'vocab') { openLexicon(); return; }
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
