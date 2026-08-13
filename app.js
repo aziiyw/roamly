@@ -490,12 +490,17 @@ function dashboard() {
  // Recent trail: show the most recent words scanned, or empty state
  const recentTrail = data.vocab.length > 0 ? `<div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
  ${data.vocab.slice(0, 3).map(v => `<div class="trail"><div class="trail-photo market">${v.word.slice(0, 3)}</div><div><b>${v.meaning || v.word}</b><p>at ${v.place || data.trip.place.split(',')[0]}</p></div><span>${v.category || 'Signs'}</span></div>`).join('')}` : '';
+ // Past trips section: show old trips the user can quiz themselves on
+ const pastTrips = loadPastTrips().filter(t => t.place !== data.trip.place && t.vocab && t.vocab.length > 0);
+ const pastTripsSection = pastTrips.length > 0 ? `<div class="section-heading recent"><div><p class="eyebrow">YOUR PAST ADVENTURES</p><h2>Revisit old trips</h2></div></div>
+ ${pastTrips.map((t, i) => `<button class="past-trip-card" data-action="quizPastTrip" data-past-idx="${i}"><span class="ptc-flag">${t.flag}</span><div class="ptc-info"><b>${t.place.split(',')[0]}</b><small>${t.vocabCount || t.vocab.length} words · ${t.lang || ''}</small></div><span class="ptc-quiz">${icon('spark')} Quiz</span></button>`).join('')}` : '';
  return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">${today}</p><h1>${getGreeting()}, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>${streak}</b><span>word<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
  <div class="stats-grid"><div><strong>${wordCount}</strong><span>words met</span></div><div><strong>${scanCount}</strong><span>scans made</span></div><div><strong>${recallRate}<small>%</small></strong><span>remembered</span></div></div>
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
  ${reviewCard}
  ${recentTrail}
+ ${pastTripsSection}
  </section>`, 'home');
 }
 
@@ -635,6 +640,25 @@ app.addEventListener('click', e => {
   if (a==='answer') { const pick = target.dataset.pick; if (state.quiz) { state.quiz.picked = pick; state.quiz.answered = true; const pool = (data.vocab.length >= 2 ? data.vocab : starterVocabulary); const word = pool[state.quiz.order[state.quiz.idx]]; if (pick === word?.meaning) state.quiz.score++; } }
   if (a==='quizNext') { if (state.quiz) { state.quiz.idx++; state.quiz.answered = false; state.quiz.picked = null; } }
   if (a==='quizRestart') { state.quiz = null; }
+  // Quiz on a specific past trip's vocab
+  if (a === 'quizPastTrip') {
+    const idx = parseInt(target.dataset.pastIdx);
+    const past = loadPastTrips();
+    // Past trips are filtered on the trip page, so the index maps to the filtered list
+    const filtered = past.filter(t => t.place !== data.trip.place);
+    const trip = filtered[idx];
+    if (trip && trip.vocab && trip.vocab.length >= 1) {
+      state.quizVocabBackup = [...data.vocab]; // save current vocab
+      data.vocab = trip.vocab.map(v => ({ ...v, seen: v.seen || 1, level: v.level || 30, status: v.status || 'Seen before' }));
+      state.quiz = null; // reset quiz so it rebuilds with new pool
+      state.screen = 'quiz';
+    }
+  }
+  // Restore current vocab after a past-trip quiz ends
+  if (a === 'quizDone' || a === 'home') {
+    if (state.quizVocabBackup) { data.vocab = state.quizVocabBackup; delete state.quizVocabBackup; }
+    state.quiz = null;
+  }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
   render();
 });
