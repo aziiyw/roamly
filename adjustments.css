@@ -6,6 +6,16 @@ input, textarea, select { font-size: 16px !important }
 .today-card .eyebrow{position:relative;z-index:2}
 .today-decoration{z-index:0!important}
 
+/* === Past trip cards on dashboard === */
+.past-trip-card{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:#fff;margin-bottom:10px;cursor:pointer;transition:border-color .2s,background .2s;text-align:left}
+.past-trip-card:active{background:#f9f5fd;border-color:#b3a5cf}
+.ptc-flag{font-size:26px;flex-shrink:0;width:40px;text-align:center}
+.ptc-info{flex:1;display:flex;flex-direction:column;gap:2px}
+.ptc-info b{font-size:13px;font-weight:800}
+.ptc-info small{font-size:10px;color:var(--muted)}
+.ptc-quiz{flex-shrink:0;display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,#b3a5cf,#c9b8df);color:#fff;border-radius:10px;padding:7px 11px;font:800 9px 'Nunito',sans-serif;letter-spacing:.3px}
+.ptc-quiz svg{width:13px}
+
 /* === New trip button === */
 .new-trip-btn{margin:8px 0 20px;font-size:13px;gap:8px}
 .new-trip-btn svg{width:16px}
