@@ -251,7 +251,7 @@ Choose at most 5 useful, common travel words. Coordinates must be normalized 0â€
 // go through the proxy (key stays hidden). Otherwise calls GLM directly (key
 // is public in the browser â€” use a throwaway key).
 async function analyzeImageClientSide(dataUrl) {
-  const config = window.ROAMLY_CONFIG || {};
+  const config = window.VERVIA_CONFIG || {};
 
   // OPTION A: use proxy (key hidden server-side)
   if (config.glmProxyUrl) {
