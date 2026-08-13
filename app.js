@@ -235,7 +235,7 @@ const app = document.querySelector('#app');
 
 // System prompt + GLM request shape, mirrored from api/analyze.js so the
 // client-side call behaves identically to the old serverless function.
-const ANALYZE_SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
+const ANALYZE_SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
 {
   "detectedText":"...",
   "translation":"...",
@@ -270,7 +270,7 @@ async function analyzeImageClientSide(dataUrl) {
 
   // OPTION B: call GLM directly (key is public in config.js)
   if (!config.glmApiKey || config.glmApiKey === 'PASTE-YOUR-THROWAWAY-ZAI-KEY-HERE') {
-    throw new Error("Roamly's API key isn't configured. Open config.js and paste a Z.AI key.");
+    throw new Error("vervia's API key isn't configured. Open config.js and paste a Z.AI key.");
   }
   const glmResponse = await fetch(config.glmEndpoint, {
     method: 'POST',
@@ -354,7 +354,7 @@ const icon = (name) => icons[name] || '';
 
 function shell(content, active = 'home') {
   return `<div class="app-shell">
-    <header class="topbar"><button class="wordmark" data-action="home">roamly<span>·</span></button><div class="top-actions"><button class="trip-pill" data-action="trip"><b>${data.trip.flag}</b><span>${data.trip.name}</span>${icon('arrow')}</button><button class="avatar">AZ</button></div></header>
+    <header class="topbar"><button class="wordmark" data-action="home">vervia<span>·</span></button><div class="top-actions"><button class="trip-pill" data-action="trip"><b>${data.trip.flag}</b><span>${data.trip.name}</span>${icon('arrow')}</button><button class="avatar">AZ</button></div></header>
     ${content}
     <nav class="bottom-nav"><button class="${active === 'home' ? 'active' : ''}" data-action="home">${icon('home')}<span>Home</span></button><button class="${active === 'scan' ? 'active' : ''}" data-action="scan">${icon('camera')}<span>Scan</span></button><button class="${active === 'vocab' ? 'active' : ''}" data-action="vocab">${icon('book')}<span>Words</span></button><button class="${active === 'trip' ? 'active' : ''}" data-action="trip">${icon('map')}<span>Trip</span></button></nav>
   </div>`;
