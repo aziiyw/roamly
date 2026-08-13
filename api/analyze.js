@@ -1,10 +1,10 @@
 // LEGACY — Vercel serverless function. Set GLM_API_KEY in Vercel's Environment Variables.
 //
-// Roamly now runs entirely on GitHub Pages and calls GLM client-side via
+// vervia now runs entirely on GitHub Pages and calls GLM client-side via
 // config.js + the analyzeImageClientSide() helper in app.js. This function is
 // NOT used on Pages. It's kept here so the project still deploys to Vercel as a
 // fallback if you ever want a secret key (see README.md → Vercel).
-const SYSTEM_PROMPT = `You are Roamly, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
+const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
 {
   "detectedText":"...",
   "translation":"...",
