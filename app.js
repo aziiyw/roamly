@@ -247,6 +247,25 @@ const ANALYZE_SYSTEM_PROMPT = `You are vervia, a kind travel-language companion.
 }
 Choose at most 5 useful, common travel words. Coordinates must be normalized 0–1000 relative to the image, and the translation should sound natural in English.`;
 
+// POSTs { image } to a proxy URL and returns the parsed `content` string.
+// Throws on non-2xx with the worker's error message if available.
+async function callVisionProxy(url, dataUrl) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: dataUrl })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const msg = err.error || `The translation service is unavailable (${resp.status}).`;
+    const e = new Error(msg);
+    e.proxyStatus = resp.status;
+    throw e;
+  }
+  const data = await resp.json();
+  return data.content || '';
+}
+
 // Calls Z.AI's GLM vision model. If glmProxyUrl is set in config.js, requests
 // go through the proxy (key stays hidden). Otherwise calls GLM directly (key
 // is public in the browser — use a throwaway key).
@@ -255,17 +274,25 @@ async function analyzeImageClientSide(dataUrl) {
 
   // OPTION A: use proxy (key hidden server-side)
   if (config.glmProxyUrl) {
-    const proxyResp = await fetch(config.glmProxyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl })
-    });
-    if (!proxyResp.ok) {
-      const err = await proxyResp.json().catch(() => ({}));
-      throw new Error(err.error || `The translation service is unavailable (${proxyResp.status}).`);
+    // Try Z.AI first; on any failure (rate limit, network, 5xx) fall through
+    // to the Groq proxy if configured. If neither works, surface the last error.
+    let lastError = null;
+    try {
+      const content = await callVisionProxy(config.glmProxyUrl, dataUrl);
+      return parseGLMJson(content);
+    } catch (e) {
+      lastError = e;
     }
-    const data = await proxyResp.json();
-    return parseGLMJson(data.content || '');
+    if (config.groqProxyUrl) {
+      try {
+        const content = await callVisionProxy(config.groqProxyUrl, dataUrl);
+        return parseGLMJson(content);
+      } catch (e) {
+        // Both providers failed — throw the most informative error
+        throw new Error(`Z.AI: ${lastError.message} · Groq: ${e.message}`);
+      }
+    }
+    throw lastError;
   }
 
   // OPTION B: call GLM directly (key is public in config.js)
