@@ -6,7 +6,7 @@
 //
 window.VERVIA_CONFIG = {
   // Proxy URL — the Cloudflare Worker that holds your key
-  glmProxyUrl: 'https://roamly-proxy.amber-zhangr.workers.dev/',
+  glmProxyUrl: 'https://roamly-proxy.amber-zhangr.workers.dev',
 
   // No key here anymore — the proxy has it
   glmApiKey: '',
