@@ -15,6 +15,245 @@ function findMatchingLangTrip(langCode) {
 
 const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
+// === Travel-phrase flashcards for trip preparation ===
+// Each language is organised into 3 sections: 'Signs & basics', 'Food & drink',
+// 'Polite everyday'. Every card is { front, reading, back }. front is shown
+// first; reading + back are revealed on tap.
+const FLASHCARDS = {
+  ja: [
+    { section: 'Signs & basics', cards: [
+      { front: '出口', reading: 'deguchi',     back: 'Exit' },
+      { front: '入口', reading: 'iriguchi',    back: 'Entrance' },
+      { front: 'お手洗い', reading: 'otearai',  back: 'Restroom' },
+      { front: '禁煙', reading: 'kinen',        back: 'No smoking' },
+      { front: '営業中', reading: 'eigyō-chū',  back: 'Open (in business)' },
+      { front: '駅', reading: 'eki',            back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'おすすめ', reading: 'osusume',    back: 'Recommendation' },
+      { front: '水', reading: 'mizu',           back: 'Water' },
+      { front: 'お会計', reading: 'o-kaikei',   back: 'The bill, please' },
+      { front: '注文', reading: 'chūmon',       back: 'Order' },
+      { front: '乾杯', reading: 'kanpai',       back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'こんにちは', reading: 'konnichiwa',     back: 'Hello / Good afternoon' },
+      { front: 'ありがとう', reading: 'arigatō',        back: 'Thank you' },
+      { front: 'すみません', reading: 'sumimasen',      back: 'Excuse me / Sorry' },
+      { front: 'お願いします', reading: 'onegaishimasu', back: 'Please' },
+      { front: 'わかりません', reading: 'wakarimasen',  back: "I don't understand" },
+      { front: 'もう一度', reading: 'mō ichido',       back: 'One more time / Again' },
+    ]},
+  ],
+  fr: [
+    { section: 'Signs & basics', cards: [
+      { front: 'Sortie', reading: 'sor-TEE', back: 'Exit' },
+      { front: 'Entrée', reading: 'ahn-TRAY', back: 'Entrance' },
+      { front: 'Toilettes', reading: 'twah-LET', back: 'Restroom' },
+      { front: 'Défense de fumer', reading: 'day-FAHNSS duh fu-MAY', back: 'No smoking' },
+      { front: 'Ouvert', reading: 'oo-VER', back: 'Open' },
+      { front: 'Gare', reading: 'gar', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: "L'addition, s'il vous plaît", reading: 'lah-dee-SYON seel voo play', back: 'The bill, please' },
+      { front: "De l'eau", reading: 'duh LO', back: 'Some water' },
+      { front: 'La carte', reading: 'lah KART', back: 'The menu' },
+      { front: 'Santé', reading: 'sahn-TAY', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'Bonjour', reading: 'bohn-ZHOOR', back: 'Hello' },
+      { front: 'Merci', reading: 'mehr-SEE', back: 'Thank you' },
+      { front: 'Pardon', reading: 'par-DOHN', back: 'Excuse me' },
+      { front: "S'il vous plaît", reading: 'seel voo play', back: 'Please' },
+      { front: 'Je ne comprends pas', reading: 'zhuh nohn kohn-PRAHN pah', back: "I don't understand" },
+      { front: 'Répétez, s’il vous plaît', reading: 'ray-PAY-tay seel voo play', back: 'Please repeat' },
+    ]},
+  ],
+  it: [
+    { section: 'Signs & basics', cards: [
+      { front: 'Uscita', reading: 'oo-SHEE-tah', back: 'Exit' },
+      { front: 'Ingresso', reading: 'een-GRESS-oh', back: 'Entrance' },
+      { front: 'Bagno', reading: 'BAH-nyoh', back: 'Restroom' },
+      { front: 'Vietato fumare', reading: 'vyay-TAH-toh foo-MAH-ray', back: 'No smoking' },
+      { front: 'Aperto', reading: 'ah-PER-toh', back: 'Open' },
+      { front: 'Stazione', reading: 'stah-TSYOH-nay', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'Il conto, per favore', reading: 'eel KON-toh per fah-VOH-ray', back: 'The bill, please' },
+      { front: "Dell'acqua", reading: 'del-LAH-kwah', back: 'Some water' },
+      { front: 'Il menù', reading: 'eel meh-NOO', back: 'The menu' },
+      { front: 'Cin cin', reading: 'chin chin', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'Ciao', reading: 'CHOW', back: 'Hello / Goodbye (informal)' },
+      { front: 'Buongiorno', reading: 'bwon-JOR-noh', back: 'Good day' },
+      { front: 'Grazie', reading: 'GRAHT-syeh', back: 'Thank you' },
+      { front: 'Scusa', reading: 'SKOO-zah', back: 'Excuse me (informal)' },
+      { front: 'Per favore', reading: 'per fah-VOH-ray', back: 'Please' },
+      { front: 'Non capisco', reading: 'non kah-PEE-skoh', back: "I don't understand" },
+      { front: 'Può ripetere', reading: 'pwoh ree-PEH-teh-reh', back: 'Can you repeat' },
+    ]},
+  ],
+  es: [
+    { section: 'Signs & basics', cards: [
+      { front: 'Salida', reading: 'sah-LEE-dah', back: 'Exit' },
+      { front: 'Entrada', reading: 'en-TRAH-dah', back: 'Entrance' },
+      { front: 'Baños', reading: 'BAH-nyohs', back: 'Restroom' },
+      { front: 'No fumar', reading: 'noh foo-MAR', back: 'No smoking' },
+      { front: 'Abierto', reading: 'ah-BYEER-toh', back: 'Open' },
+      { front: 'Estación', reading: 'es-tah-SYOHN', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'La cuenta, por favor', reading: 'lah KWEN-tah por fah-VOR', back: 'The bill, please' },
+      { front: 'Agua', reading: 'AH-gwah', back: 'Water' },
+      { front: 'La carta', reading: 'lah KAR-tah', back: 'The menu' },
+      { front: 'Salud', reading: 'sah-LOOD', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'Hola', reading: 'OH-lah', back: 'Hello' },
+      { front: 'Buenos días', reading: 'BWAY-nohs DEE-ahs', back: 'Good morning' },
+      { front: 'Gracias', reading: 'GRAH-syahs', back: 'Thank you' },
+      { front: 'Disculpe', reading: 'dees-KOOL-pay', back: 'Excuse me (formal)' },
+      { front: 'Por favor', reading: 'por fah-VOR', back: 'Please' },
+      { front: 'No entiendo', reading: 'noh en-TYEN-doh', back: "I don't understand" },
+      { front: '¿Puede repetir?', reading: 'PWAY-day ray-peh-TEER', back: 'Can you repeat?' },
+    ]},
+  ],
+  ko: [
+    { section: 'Signs & basics', cards: [
+      { front: '출구', reading: 'chul-gu', back: 'Exit' },
+      { front: '입구', reading: 'ip-gu', back: 'Entrance' },
+      { front: '화장실', reading: 'hwa-jang-shil', back: 'Restroom' },
+      { front: '금연', reading: 'geum-yeon', back: 'No smoking' },
+      { front: '영업중', reading: 'yeong-eop-jung', back: 'Open (in business)' },
+      { front: '역', reading: 'yeok', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: '계산해 주세요', reading: 'gye-san-hae ju-se-yo', back: 'The bill, please' },
+      { front: '물', reading: 'mul', back: 'Water' },
+      { front: '메뉴판', reading: 'me-nyu-pan', back: 'The menu' },
+      { front: '건배', reading: 'geon-bae', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: '안녕하세요', reading: 'annyeong-haseyo', back: 'Hello (polite)' },
+      { front: '감사합니다', reading: 'gamsahamnida', back: 'Thank you' },
+      { front: '죄송합니다', reading: 'joesonghamnida', back: "I'm sorry" },
+      { front: '주세요', reading: 'ju-se-yo', back: 'Please (give me)' },
+      { front: '이해 못 해요', reading: 'i-hae mot hae-yo', back: "I don't understand" },
+      { front: '다시 한 번 말씀해 주세요', reading: 'da-si han-beon mal-sseum-hae ju-se-yo', back: 'Please say it again' },
+    ]},
+  ],
+  de: [
+    { section: 'Signs & basics', cards: [
+      { front: 'Ausgang', reading: 'OWSS-gung', back: 'Exit' },
+      { front: 'Eingang', reading: 'EYE-gung', back: 'Entrance' },
+      { front: 'Toilette', reading: 'toa-LET-eh', back: 'Restroom' },
+      { front: 'Rauchen verboten', reading: 'ROW-khen fer-BO-ten', back: 'No smoking' },
+      { front: 'Geöffnet', reading: 'geh-OEF-net', back: 'Open' },
+      { front: 'Bahnhof', reading: 'BAHN-hof', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'Die Rechnung, bitte', reading: 'dee REKH-noong BIT-eh', back: 'The bill, please' },
+      { front: 'Wasser', reading: 'VAH-ser', back: 'Water' },
+      { front: 'Die Speisekarte', reading: 'dee SHPY-zeh-kar-teh', back: 'The menu' },
+      { front: 'Prost', reading: 'prohst', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'Hallo', reading: 'HAH-loh', back: 'Hello' },
+      { front: 'Guten Tag', reading: 'GOO-ten tahk', back: 'Good day' },
+      { front: 'Danke', reading: 'DAHN-keh', back: 'Thank you' },
+      { front: 'Entschuldigung', reading: 'ent-SHOOL-dee-goong', back: 'Excuse me / Sorry' },
+      { front: 'Bitte', reading: 'BIT-eh', back: "Please / You're welcome" },
+      { front: 'Ich verstehe nicht', reading: 'ikh fer-SHTEH-eh nikht', back: "I don't understand" },
+      { front: 'Können Sie wiederholen', reading: 'KER-nen zee VEE-der-ho-len', back: 'Can you repeat?' },
+    ]},
+  ],
+  pt: [
+    { section: 'Signs & basics', cards: [
+      { front: 'Saída', reading: 'sah-EE-dah', back: 'Exit' },
+      { front: 'Entrada', reading: 'en-TRAH-dah', back: 'Entrance' },
+      { front: 'Casa de banho', reading: 'KAH-zah deh BAH-nyoh', back: 'Restroom' },
+      { front: 'Não fumar', reading: 'now foo-MAR', back: 'No smoking' },
+      { front: 'Aberto', reading: 'ah-BER-toh', back: 'Open' },
+      { front: 'Estação', reading: 'shtah-SOW', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'A conta, por favor', reading: 'ah KON-tah por fah-VOR', back: 'The bill, please' },
+      { front: 'Água', reading: 'AH-gwah', back: 'Water' },
+      { front: 'O menu', reading: 'oo meh-NOO', back: 'The menu' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'Olá', reading: 'oh-LAH', back: 'Hello' },
+      { front: 'Bom dia', reading: 'bom DEE-ah', back: 'Good morning' },
+      { front: 'Obrigado', reading: 'oh-bree-GAH-doh', back: 'Thank you (masc)' },
+      { front: 'Desculpe', reading: 'desh-KOOL-pek', back: 'Excuse me' },
+      { front: 'Por favor', reading: 'por fah-VOR', back: 'Please' },
+      { front: 'Não entendo', reading: 'now en-TEN-doh', back: "I don't understand" },
+    ]},
+  ],
+  zh: [
+    { section: 'Signs & basics', cards: [
+      { front: '出口', reading: 'chū kǒu', back: 'Exit' },
+      { front: '入口', reading: 'rù kǒu', back: 'Entrance' },
+      { front: '洗手间', reading: 'xǐ shǒu jiān', back: 'Restroom' },
+      { front: '禁止吸烟', reading: 'jìn zhǐ xī yān', back: 'No smoking' },
+      { front: '营业中', reading: 'yíng yè zhōng', back: 'Open (in business)' },
+      { front: '车站', reading: 'chē zhàn', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: '买单', reading: 'mǎi dān', back: 'The bill, please' },
+      { front: '水', reading: 'shuǐ', back: 'Water' },
+      { front: '菜单', reading: 'cài dān', back: 'The menu' },
+      { front: '干杯', reading: 'gān bēi', back: 'Cheers' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: '你好', reading: 'nǐ hǎo', back: 'Hello' },
+      { front: '谢谢', reading: 'xiè xie', back: 'Thank you' },
+      { front: '对不起', reading: 'duì bù qǐ', back: 'Sorry' },
+      { front: '请', reading: 'qǐng', back: 'Please' },
+      { front: '我听不懂', reading: 'wǒ tīng bù dǒng', back: "I don't understand" },
+      { front: '请再说一遍', reading: 'qǐng zài shuō yī biàn', back: 'Please say it again' },
+    ]},
+  ],
+  th: [
+    { section: 'Signs & basics', cards: [
+      { front: 'ทางออก', reading: 'taang òk', back: 'Exit' },
+      { front: 'ทางเข้า', reading: 'taang kâo', back: 'Entrance' },
+      { front: 'ห้องน้ำ', reading: 'hâwng nám', back: 'Restroom' },
+      { front: 'ห้ามสูบบุหรี่', reading: 'hâam sùp bu-rì', back: 'No smoking' },
+      { front: 'เปิด', reading: 'bpèrt', back: 'Open' },
+      { front: 'สถานี', reading: 'sà-tǎan-nee', back: 'Station' },
+    ]},
+    { section: 'Food & drink', cards: [
+      { front: 'เช็คบิล', reading: 'chek bin', back: 'The bill, please' },
+      { front: 'น้ำ', reading: 'nám', back: 'Water' },
+      { front: 'เมนู', reading: 'may-noo', back: 'The menu' },
+    ]},
+    { section: 'Polite everyday', cards: [
+      { front: 'สวัสดี', reading: 'sà-wàt-dee', back: 'Hello' },
+      { front: 'ขอบคุณ', reading: 'kàwp-kun', back: 'Thank you' },
+      { front: 'ขอโทษ', reading: 'kǒr-tôot', back: 'Sorry / Excuse me' },
+      { front: 'ช่วย', reading: 'chûay', back: 'Please (help)' },
+      { front: 'ไม่เข้าใจ', reading: 'mâi kâo-jai', back: "I don't understand" },
+      { front: 'พูดอีกครั้ง', reading: 'pôot èek kráng', back: 'Please say it again' },
+    ]},
+  ],
+};
+// Generic fallback for languages without a dedicated set above
+const FLASHCARDS_FALLBACK = [
+  { section: 'Polite everyday', cards: [
+    { front: 'Hello', reading: '', back: 'Hello' },
+    { front: 'Thank you', reading: '', back: 'Thank you' },
+    { front: 'Sorry', reading: '', back: 'Sorry' },
+    { front: 'Please', reading: '', back: 'Please' },
+    { front: "I don't understand", reading: '', back: "I don't understand" },
+    { front: 'Yes / No', reading: '', back: 'Yes / No' },
+  ]},
+];
+function getFlashcardsForLang(langCode) {
+  return FLASHCARDS[langCode] || FLASHCARDS_FALLBACK;
+}
+
 // Greetings in different languages, keyed by langCode
 const greetings = {
   ja: 'Ohayō', fr: 'Bonjour', it: 'Ciao', es: 'Hola', ko: 'Annyeong', th: 'Sawadee',
@@ -230,7 +469,7 @@ function clearSession() {
 // On load: if the user has an existing session, go straight to the dashboard
 const hasExistingSession = loadSession();
 
-let state = { screen: hasExistingSession ? 'home' : 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '' };
+let state = { screen: hasExistingSession ? 'home' : 'welcome', mode: 'learn', showQuiz: false, quizAnswered: false, query: '', category: 'All', uploadedImage: '', analysis: null, scanError: '', preparing: false, flashcards: { sectionIdx: 0, cardIdx: 0, flipped: false, savedSections: [] } };
 const app = document.querySelector('#app');
 
 // System prompt + GLM request shape, mirrored from api/analyze.js so the
@@ -398,6 +637,7 @@ function welcome() {
     <div class="welcome-art"><div class="travel-card card-one"><b>bonjour</b></div><div class="travel-card card-two"><b>こんにちは</b></div><div class="travel-card card-three"><b>hola</b></div><div class="phrasebook"><div class="book-lines"><i></i><i></i><i></i></div><b>ROAM<br>PHRASES</b><span>✦</span></div><div class="pin">⌖</div><div class="ticket-stub">LANGUAGE<br>PASS</div></div>
     <div class="welcome-copy"><p class="eyebrow">YOUR TRAVEL LANGUAGE COMPANION</p><h1>Learn the <i>world</i><br>as you see it.</h1><p class="subcopy">Every sign, menu, and small discovery can become part of your story.</p></div>
     <button class="primary full" data-action="setup">Begin a trip <span>${icon('arrow')}</span></button>
+    <button class="primary full yellow" data-action="prepareTrip">Prepare a trip <span>${icon('arrow')}</span></button>
     <p class="signin">Already exploring? <button data-action="home">Continue your trip</button></p>
   </section>`;
 }
@@ -517,6 +757,10 @@ function dashboard() {
  const masteredCount = data.vocab.filter(v => v.level >= 70).length;
  const recallRate = wordCount > 0 ? Math.round((masteredCount / wordCount) * 100) : 0;
  const streak = Math.max(1, Math.min(wordCount + 1, 30));
+ // Trip is "in the future" if its end date is after today. Used to decide
+ // whether to show the "Learn & prepare" section above the gentle refresh.
+ const tripEnd = data.trip.dateEnd ? new Date(data.trip.dateEnd) : null;
+ const isFutureTrip = tripEnd && !isNaN(tripEnd) && tripEnd > new Date();
  // Pick the most-seen word for the review card, or hide if no vocab
  const reviewWord = data.vocab.length > 0 ? [...data.vocab].sort((a,b) => (b.seen||1) - (a.seen||1))[0] : null;
  // Pick a font-size for the review chip's word so it always fits inside the
@@ -542,6 +786,7 @@ function dashboard() {
  return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">${today}</p><h1>${getGreeting()}, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>${streak}</b><span>word<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
  <div class="stats-grid"><div><strong>${wordCount}</strong><span>words met</span></div><div><strong>${scanCount}</strong><span>scans made</span></div><div><strong>${recallRate}<small>%</small></strong><span>remembered</span></div></div>
+ ${isFutureTrip ? `<section class="prep-card"><div class="prep-head"><p class="eyebrow">UP NEXT IN ${data.trip.dates || 'YOUR TRIP'}</p><h2>Learn & prepare</h2><p>Brush up on your ${data.trip.lang} before you arrive.</p></div><div class="prep-actions"><button class="prep-btn" data-action="vocab"><span class="prep-emoji">✦</span><b>Review vocab</b><small>Read through what you've collected</small></button><button class="prep-btn" data-action="quiz"><span class="prep-emoji">${icon('spark')}</span><b>Quiz yourself</b><small>Test your recall</small></button></div><button class="prep-new-trip" data-action="newTrip">+ Prepare a new trip</button></section>` : ''}
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
  ${reviewCard}
  ${recentTrail}
@@ -591,6 +836,51 @@ function vocab() {
  </section>`, 'vocab');
 }
 
+// Travel-phrase flashcards shown right after a user finishes setting up a
+// trip ("Prepare a trip" on the welcome screen). Tap a card to flip between
+// the foreign phrase and its English meaning + pronunciation.
+function flashcards() {
+  const sets = getFlashcardsForLang(data.trip.langCode);
+  const sIdx = Math.min(state.flashcards.sectionIdx, sets.length - 1);
+  const section = sets[sIdx];
+  const cIdx = Math.min(state.flashcards.cardIdx, section.cards.length - 1);
+  const card = section.cards[cIdx];
+  const flipped = state.flashcards.flipped;
+  // Total cards across all sections, used for the progress label
+  const totalCards = sets.reduce((sum, s) => sum + s.cards.length, 0);
+  let absoluteIdx = 0;
+  for (let i = 0; i < sIdx; i++) absoluteIdx += sets[i].cards.length;
+  absoluteIdx += cIdx + 1; // 1-based
+  return shell(`<section class="page flashcards-page">
+    <button class="back" data-action="trip">←</button>
+    <div class="flashcards-head">
+      <p class="eyebrow">PREPARE FOR ${data.trip.lang.toUpperCase()}</p>
+      <h1>Little ${section.section.toLowerCase()} phrases</h1>
+      <p class="flashcards-progress">${absoluteIdx} of ${totalCards} · tap to reveal</p>
+    </div>
+    <div class="flashcards-tabs">${sets.map((s, i) => `<button class="${i === sIdx ? 'selected' : ''}" data-action="flashcardSection" data-section-idx="${i}">${s.section}</button>`).join('')}</div>
+    <div class="flashcard-scene">
+      <div class="flashcard ${flipped ? 'is-flipped' : ''}" data-action="flashcardFlip">
+        <div class="flashcard-face flashcard-front">
+          <span class="fc-eyebrow">${section.section}</span>
+          <b class="fc-front-text">${card.front}</b>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <span class="fc-eyebrow">${card.reading || '\u00a0'}</span>
+          <b class="fc-back-text">${card.back}</b>
+          <small class="fc-tap-hint">tap to flip back</small>
+        </div>
+      </div>
+    </div>
+    <div class="flashcards-controls">
+      <button class="flashcard-nav" data-action="flashcardPrev" ${sIdx === 0 && cIdx === 0 ? 'disabled' : ''}>← Previous</button>
+      <span class="flashcard-counter">${cIdx + 1} / ${section.cards.length}</span>
+      <button class="flashcard-nav" data-action="flashcardNext">${absoluteIdx === totalCards ? 'Save to phrasebook' : 'Next →'}</button>
+    </div>
+    <button class="text-scan-again" data-action="skipPrep">Skip for now — go to scanning</button>
+  </section>`, '');
+}
+
 function trip() {
   const pastTrips = loadPastTrips().filter(t => t.place !== data.trip.place);
   const tripColours = ['#f6dd98', '#c9b3e6', '#a8d5c2', '#f5c6a6', '#a9c7e8', '#e8c9dd', '#d9e0a8', '#f2d796'];
@@ -603,7 +893,7 @@ function trip() {
            <span class="pt-arrow">${icon('arrow')}</span>
          </button>`).join('')}</div>`
     : `<div class="return-card"><span>✦</span><div><p class="eyebrow">YOUR PHRASEBOOKS</p><h2>Past trips will gather here.</h2><p>Scan a few words on this trip and it'll be saved as a little notebook for next time.</p></div></div>`;
-  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div><button class="primary full new-trip-btn" data-action="newTrip">${icon('spark')} Start a new trip <span>→</span></button>${pastList}</section>`, 'trip'); }
+  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div><button class="primary full yellow new-trip-btn" data-action="newTrip">${icon('spark')} Prepare a new trip <span>→</span></button>${pastList}</section>`, 'trip'); }
 
 function quiz() {
  // Build quiz questions from saved vocab; fall back to starter set if empty
@@ -624,7 +914,7 @@ function quiz() {
 
 function render() {
   try {
-    const views = { welcome, setup, modeChoice, memory, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
+    const views = { welcome, setup, modeChoice, memory, flashcards, home: dashboard, scan, result, loading, scanError, vocab, trip, quiz };
     const html = views[state.screen]();
     // Some screen functions return an HTML string (via shell()), others set
     // app.innerHTML directly. Assign the return value if one was returned.
@@ -672,7 +962,20 @@ app.addEventListener('click', e => {
   // Play the Phrasebook-opening animation before showing the vocab page
   if (a === 'vocab') { openLexicon(); return; }
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
-  if (a === 'startChapter') { saveSession(); state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice'; }
+  if (a === 'startChapter') {
+    saveSession();
+    // "Prepare a trip" path: after the user picks destination + dates, send
+    // them through the flashcard prep screen first so they learn some
+    // essential phrases before arriving. The regular "Begin a trip" path
+    // skips prep and goes straight to scanning.
+    if (state.preparing) {
+      state.preparing = false;
+      state.flashcards = { sectionIdx: 0, cardIdx: 0, flipped: false };
+      state.screen = 'flashcards';
+    } else {
+      state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice';
+    }
+  }
   if (a === 'memory') state.screen = 'memory';
   if (a === 'memoryQuiz') {
     // Load the past trip's words so the rejog quiz tests what they actually learned.
@@ -705,8 +1008,74 @@ app.addEventListener('click', e => {
     state.quiz = null;
   }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
+  // === Trip preparation (flashcards + new trip) ===
+  if (a === 'prepareTrip') { state.preparing = true; state.screen = 'setup'; }
+  if (a === 'flashcardFlip') { state.flashcards.flipped = !state.flashcards.flipped; }
+  if (a === 'flashcardNext') {
+    const sets = getFlashcardsForLang(data.trip.langCode);
+    const sIdx = Math.min(state.flashcards.sectionIdx, sets.length - 1);
+    const section = sets[sIdx];
+    if (state.flashcards.cardIdx < section.cards.length - 1) {
+      // Advance within the current section
+      state.flashcards.cardIdx++;
+      state.flashcards.flipped = false;
+    } else if (sIdx < sets.length - 1) {
+      // Move to the next section, reset card index
+      state.flashcards.sectionIdx++;
+      state.flashcards.cardIdx = 0;
+      state.flashcards.flipped = false;
+    } else {
+      // Last card overall — save the prep phrases to vocab and continue to scanning
+      saveFlashcardsToVocab();
+      state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice';
+    }
+  }
+  if (a === 'flashcardPrev') {
+    if (state.flashcards.cardIdx > 0) {
+      state.flashcards.cardIdx--;
+      state.flashcards.flipped = false;
+    } else if (state.flashcards.sectionIdx > 0) {
+      state.flashcards.sectionIdx--;
+      const prevSet = getFlashcardsForLang(data.trip.langCode)[state.flashcards.sectionIdx];
+      state.flashcards.cardIdx = prevSet.cards.length - 1;
+      state.flashcards.flipped = false;
+    }
+  }
+  if (a === 'flashcardSection') {
+    state.flashcards.sectionIdx = parseInt(target.dataset.sectionIdx, 10);
+    state.flashcards.cardIdx = 0;
+    state.flashcards.flipped = false;
+  }
+  if (a === 'skipPrep') { state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice'; }
   render();
 });
+
+// Save the cards the user just prepped through into their vocab (as 'New'
+// words at the destination of this trip). Mirrors what uploadTravelImage does
+// for scanned words so they appear identically in the Phrasebook.
+function saveFlashcardsToVocab() {
+  const sets = getFlashcardsForLang(data.trip.langCode);
+  const newWords = [];
+  sets.forEach(section => {
+    section.cards.forEach(card => {
+      newWords.push({
+        word: card.front,
+        reading: card.reading || '',
+        meaning: card.back,
+        category: section.section === 'Food & drink' ? 'Food'
+                 : section.section === 'Signs & basics' ? 'Signs'
+                 : 'Signs',
+        seen: 1,
+        level: 15,
+        status: 'New',
+        place: data.trip.place
+      });
+    });
+  });
+  data.vocab = [...newWords, ...data.vocab.filter(existing => !newWords.some(w => w.word === existing.word))];
+  saveCurrentTrip();
+  saveProgress();
+}
 
 // Plays the animated Phrasebook-opening transition (bottom-to-top), then shows vocab.
 function openLexicon() {

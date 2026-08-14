@@ -153,3 +153,50 @@ input, textarea, select { font-size: 16px !important }
    chip clips anything that would otherwise spill out. */
 .review-word{overflow:hidden}
 .review-word span{display:block;max-width:100%;line-height:1.1;overflow-wrap:break-word;word-break:break-word}
+
+/* === Yellow variant of the primary button (used for 'Prepare a trip' CTAs) === */
+.primary.yellow{background:#f6dd98;color:#76633e}
+.primary.yellow:hover{background:#efce7a}
+.primary.yellow::before{content:'';position:absolute;inset:6px;border:1px solid #dcc279;border-radius:inherit;pointer-events:none;opacity:.5}
+.primary{position:relative}
+
+/* === Flashcard prep screen === */
+.flashcards-page .back{margin-bottom:14px;font-size:18px}
+.flashcards-head{text-align:center;margin-bottom:18px}
+.flashcards-head h1{font:600 24px/1.1 'Playfair Display',serif;letter-spacing:-1px;margin:6px 0 6px;color:var(--ink)}
+.flashcards-progress{font:600 11px/1.2 'DM Mono',monospace;color:var(--muted);margin:0;letter-spacing:.3px}
+.flashcards-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+.flashcards-tabs button{font:700 11px/1 'Nunito',sans-serif;padding:8px 12px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:all .2s ease}
+.flashcards-tabs button.selected{background:#8b81ad;color:#fff;border-color:#8b81ad}
+.flashcard-scene{perspective:1400px;margin:0 auto 18px;max-width:340px}
+.flashcard{position:relative;width:100%;aspect-ratio:5/3;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,.05,.2,1);cursor:pointer}
+.flashcard.is-flipped{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;inset:0;border-radius:18px;background:#fffdf7;box-shadow:inset 0 0 0 1px #f0e6cc,0 8px 18px #00000010;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center;overflow:hidden}
+.flashcard-front{background:linear-gradient(180deg,#fffdf7,#fef9e8)}
+.flashcard-back{transform:rotateY(180deg);background:linear-gradient(180deg,#fef9e8,#fffdf7)}
+.fc-eyebrow{font:700 9px/1 'DM Mono',monospace;color:#a18c5e;letter-spacing:.8px;margin-bottom:14px}
+.fc-front-text{font:800 clamp(28px,7vw,52px)/1.1 'Nunito',sans-serif;color:var(--ink);letter-spacing:-1px;word-break:break-word;overflow-wrap:anywhere;max-width:100%}
+.fc-back-text{font:700 22px/1.15 'Nunito',sans-serif;color:var(--ink);margin-bottom:12px;letter-spacing:-.3px}
+.fc-tap-hint{font:600 9px/1 'DM Mono',monospace;color:var(--muted);letter-spacing:.5px}
+.flashcards-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+.flashcard-nav{flex:1;font:700 11px/1 'Nunito',sans-serif;padding:12px 14px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:background .2s ease}
+.flashcard-nav:hover:not(:disabled){background:#faf6f0}
+.flashcard-nav:disabled{opacity:.4;cursor:not-allowed}
+.flashcard-nav:last-child{background:#8b81ad;color:#fff;border-color:#8b81ad}
+.flashcard-nav:last-child:hover:not(:disabled){background:#756a9a}
+.flashcard-counter{font:700 11px/1 'DM Mono',monospace;color:var(--muted);min-width:64px;text-align:center}
+
+/* === Dashboard prep card (only shown for trips with an end date in the future) === */
+.prep-card{margin-top:22px;padding:18px 18px 16px;border-radius:18px;background:linear-gradient(180deg,#fff8e1,#fff1c4);border:1px solid #f0d99c}
+.prep-head{margin-bottom:14px}
+.prep-head h2{font:800 18px/1.1 'Nunito',sans-serif;color:#76633e;margin:4px 0 4px;letter-spacing:-.3px}
+.prep-head p{font-size:11px;color:#9a8454;margin:0;font-weight:600}
+.prep-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.prep-btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:3px;padding:11px 13px;border-radius:13px;background:#fff;border:1px solid #f0d99c;color:var(--ink);cursor:pointer;font-family:inherit;transition:transform .15s ease,background .15s ease}
+.prep-btn:active{transform:scale(.98)}
+.prep-btn:hover{background:#fffdf7}
+.prep-emoji{font-size:16px;line-height:1;color:#b3a5cf}
+.prep-btn b{font:800 12px/1 'Nunito',sans-serif;color:var(--ink);margin-top:2px}
+.prep-btn small{font:600 9px/1.3 'DM Mono',monospace;color:var(--muted);letter-spacing:.2px}
+.prep-new-trip{display:block;width:100%;padding:11px 14px;border-radius:13px;background:#f6dd98;color:#76633e;border:none;font:800 11px/1 'Nunito',sans-serif;cursor:pointer;font-family:inherit;letter-spacing:.3px;transition:background .2s ease}
+.prep-new-trip:hover{background:#efce7a}
