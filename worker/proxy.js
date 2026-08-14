@@ -14,7 +14,9 @@
  *   GROQ_API_KEY  — Groq key (free at https://console.groq.com/keys)
  */
 
-const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text. Return ONLY valid JSON with this exact shape:
+const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text.
+
+Return ONLY a single raw JSON object — no markdown, no code fences, no explanation, no preamble. The JSON must have exactly this shape:
 {
   "detectedText":"...",
   "translation":"...",
@@ -24,7 +26,12 @@ const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse
     "word":"...", "reading":"...", "meaning":"...", "category":"Food|Transport|Shopping|Hotels|Directions|Signs", "importance":"high|medium", "box":{"x":0,"y":0,"width":0,"height":0}
   }]
 }
-Choose at most 5 useful, common travel words. Coordinates must be normalized 0–1000 relative to the image, and the translation should sound natural in English.`;
+
+Rules:
+- If the image contains no foreign-language text, return an empty vocabulary array and explain briefly in naturalNote.
+- Choose at most 5 useful, common travel words.
+- Coordinates in the box must be normalized 0–1000 relative to the image (use 0 if unsure).
+- The translation should sound natural in English.`;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -122,8 +129,10 @@ async function handleGroq(image, env) {
           ],
         }],
         temperature: 0.2,
-        // JSON mode is supported on qwen/qwen3.6-27b per Groq docs.
-        response_format: { type: 'json_object' },
+        // Note: Groq's qwen model sometimes returns JSON wrapped in markdown
+        // fences even with response_format set. We let the worker accept any
+        // text response and parse it ourselves in app.js's parseGLMJson(),
+        // which handles both plain JSON and ```json ... ``` blocks.
       }),
     });
     if (!groqResp.ok) {
