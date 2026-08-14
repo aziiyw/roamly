@@ -272,27 +272,28 @@ async function callVisionProxy(url, dataUrl) {
 async function analyzeImageClientSide(dataUrl) {
   const config = window.VERVIA_CONFIG || {};
 
-  // OPTION A: use proxy (key hidden server-side)
-  if (config.glmProxyUrl) {
-    // Try Z.AI first; on any failure (rate limit, network, 5xx) fall through
-    // to the Groq proxy if configured. If neither works, surface the last error.
-    let lastError = null;
-    try {
-      const content = await callVisionProxy(config.glmProxyUrl, dataUrl);
-      return parseGLMJson(content);
-    } catch (e) {
-      lastError = e;
-    }
-    if (config.groqProxyUrl) {
+  // OPTION A: use proxy (key hidden server-side). Try providers in order:
+  // Z.AI → Groq → Mistral. Each fallback only triggers if the previous one
+  // returned a non-2xx or its response couldn't be parsed.
+  const providerChain = [
+    { name: 'Z.AI',    url: config.glmProxyUrl },
+    { name: 'Groq',    url: config.groqProxyUrl },
+    { name: 'Mistral', url: config.mistralProxyUrl },
+  ].filter(p => p.url);
+
+  if (providerChain.length > 0) {
+    const errors = [];
+    for (const provider of providerChain) {
       try {
-        const content = await callVisionProxy(config.groqProxyUrl, dataUrl);
+        const content = await callVisionProxy(provider.url, dataUrl);
         return parseGLMJson(content);
       } catch (e) {
-        // Both providers failed — throw the most informative error
-        throw new Error(`Z.AI: ${lastError.message} · Groq: ${e.message}`);
+        errors.push(`${provider.name}: ${e.message}`);
       }
     }
-    throw lastError;
+    // All providers failed — throw a combined error so the user sees the
+    // chain of failures (helps debugging which provider tripped first).
+    throw new Error(errors.join(' · '));
   }
 
   // OPTION B: call GLM directly (key is public in config.js)

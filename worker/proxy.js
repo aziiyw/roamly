@@ -2,16 +2,18 @@
  * vervia vision proxy — Cloudflare Worker
  *
  * Routes:
- *   POST /            → Z.AI glm-5v-turbo (uses GLM_API_KEY secret)
- *   POST /api/groq    → Groq qwen/qwen3.6-27b vision (uses GROQ_API_KEY secret)
+ *   POST /            → Z.AI glm-5v-turbo      (uses GLM_API_KEY secret)
+ *   POST /api/groq    → Groq qwen/qwen3.6-27b   (uses GROQ_API_KEY secret)
+ *   POST /api/mistral → Mistral mistral-small   (uses MISTRAL_API_KEY secret)
  *
- * Both routes accept { "image": "data:image/..." } and return { "content": "..." }
- * shaped to match what app.js's parseGLMJson() expects. app.js falls through to
- * the Groq route if the Z.AI route fails.
+ * All routes accept { "image": "data:image/..." } and return { "content": "..." }
+ * shaped to match what app.js's parseGLMJson() expects. app.js falls through
+ * from Z.AI → Groq → Mistral if a route fails.
  *
  * Secrets (set with `wrangler secret put <NAME>`):
- *   GLM_API_KEY   — Z.AI key
- *   GROQ_API_KEY  — Groq key (free at https://console.groq.com/keys)
+ *   GLM_API_KEY    — Z.AI key (https://z.ai/)
+ *   GROQ_API_KEY   — Groq key (free at https://console.groq.com/keys)
+ *   MISTRAL_API_KEY — Mistral key (https://console.mistral.ai/, trial credits)
  */
 
 const SYSTEM_PROMPT = `You are vervia, a kind travel-language companion. Analyse a photo containing foreign-language text.
@@ -62,6 +64,9 @@ export default {
 
     if (url.pathname === '/api/groq') {
       return handleGroq(image, env);
+    }
+    if (url.pathname === '/api/mistral') {
+      return handleMistral(image, env);
     }
     // Default route — Z.AI
     return handleZai(image, env);
@@ -146,6 +151,46 @@ async function handleGroq(image, env) {
     return json({ content }, 200);
   } catch (err) {
     return json({ error: `Groq request failed: ${err.message || 'unknown'}` }, 502);
+  }
+}
+
+async function handleMistral(image, env) {
+  if (!env.MISTRAL_API_KEY) {
+    return json({ error: 'MISTRAL_API_KEY is not set on the worker.' }, 500);
+  }
+  try {
+    const mistralResp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.MISTRAL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        // Mistral's small vision model — free-tier friendly. See
+        // https://docs.mistral.ai/capabilities/vision/
+        model: 'mistral-small-latest',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: image },
+            { type: 'text', text: SYSTEM_PROMPT },
+          ],
+        }],
+        temperature: 0.2,
+        max_tokens: 1024,
+      }),
+    });
+    if (!mistralResp.ok) {
+      const errBody = await mistralResp.text();
+      let detail = errBody;
+      try { detail = JSON.parse(errBody)?.error?.message || errBody; } catch(e) {}
+      return json({ error: `Mistral error (${mistralResp.status}): ${detail}` }, 502);
+    }
+    const mistralData = await mistralResp.json();
+    const content = mistralData.choices?.[0]?.message?.content || '';
+    return json({ content }, 200);
+  } catch (err) {
+    return json({ error: `Mistral request failed: ${err.message || 'unknown'}` }, 502);
   }
 }
 
