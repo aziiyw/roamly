@@ -637,7 +637,7 @@ function welcome() {
     <div class="welcome-art"><div class="travel-card card-one"><b>bonjour</b></div><div class="travel-card card-two"><b>こんにちは</b></div><div class="travel-card card-three"><b>hola</b></div><div class="phrasebook"><div class="book-lines"><i></i><i></i><i></i></div><b>ROAM<br>PHRASES</b><span>✦</span></div><div class="pin">⌖</div><div class="ticket-stub">LANGUAGE<br>PASS</div></div>
     <div class="welcome-copy"><p class="eyebrow">YOUR TRAVEL LANGUAGE COMPANION</p><h1>Learn the <i>world</i><br>as you see it.</h1><p class="subcopy">Every sign, menu, and small discovery can become part of your story.</p></div>
     <button class="primary full" data-action="setup">Begin a trip <span>${icon('arrow')}</span></button>
-    <button class="primary full yellow" data-action="prepareTrip">Prepare a trip <span>${icon('arrow')}</span></button>
+    <button class="primary full yellow" data-action="prepareTrip">Prep your lingo for your next trip <span>${icon('arrow')}</span></button>
     <p class="signin">Already exploring? <button data-action="home">Continue your trip</button></p>
   </section>`;
 }
@@ -734,7 +734,7 @@ function memory() {
   if (!match) { state.screen = 'modeChoice'; return render(); }
   app.innerHTML = `<section class="mode-choice-page">
     <button class="back" data-action="setup">←</button>
-    <div class="choice-top"><span class="trip-mini">↻</span><p class="eyebrow">A PAST ${data.trip.lang.toUpperCase()} TRIP</p><h1>Rejog your<br><i>memory?</i></h1><p>You learned ${match.vocabCount} ${match.lang} words during your ${match.place} trip. A fast quiz will wake them up again before you roam.</p></div>
+    <div class="choice-top"><span class="trip-mini">↻</span><p class="eyebrow">A PAST ${data.trip.lang.toUpperCase()} TRIP</p><h1>Want to test your<br><i>memory?</i></h1><p>A quick quiz will wake up what you've already learned before you start roaming.</p></div>
     <div class="memory-preview">${(match.vocab || []).slice(0, 4).map(w => `<span>${w.word}</span>`).join('')}</div>
     <button class="primary full" data-action="memoryQuiz">${icon('spark')} Yes — quiz me <span>${icon('arrow')}</span></button>
     <button class="choice-later" data-action="modeChoice">Skip for now — show me the modes</button>
@@ -786,7 +786,7 @@ function dashboard() {
  return shell(`<section class="page dashboard"><div class="greeting"><div><p class="eyebrow">${today}</p><h1>${getGreeting()}, Amber <span>☀︎</span></h1><p>Ready for another little discovery?</p></div><div class="streak"><b>${streak}</b><span>word<br>streak</span></div></div>
  <section class="today-card"><div class="today-decoration">⌁</div><p class="eyebrow">TODAY'S LITTLE MOMENT</p><h2>Let the world around you<br>teach you something.</h2><p>Point, scan, and let curiosity do the rest.</p><button class="dark-btn" data-action="scan">Scan what you see ${icon('camera')}</button></section>
  <div class="stats-grid"><div><strong>${wordCount}</strong><span>words met</span></div><div><strong>${scanCount}</strong><span>scans made</span></div><div><strong>${recallRate}<small>%</small></strong><span>remembered</span></div></div>
- ${isFutureTrip ? `<section class="prep-card"><div class="prep-head"><p class="eyebrow">UP NEXT IN ${data.trip.dates || 'YOUR TRIP'}</p><h2>Learn & prepare</h2><p>Brush up on your ${data.trip.lang} before you arrive.</p></div><div class="prep-actions"><button class="prep-btn" data-action="vocab"><span class="prep-emoji">✦</span><b>Review vocab</b><small>Read through what you've collected</small></button><button class="prep-btn" data-action="quiz"><span class="prep-emoji">${icon('spark')}</span><b>Quiz yourself</b><small>Test your recall</small></button></div><button class="prep-new-trip" data-action="newTrip">+ Prepare a new trip</button></section>` : ''}
+ ${isFutureTrip ? `<section class="prep-card"><div class="prep-head"><p class="eyebrow">UP NEXT IN ${data.trip.dates || 'YOUR TRIP'}</p><h2>Learn & prepare</h2><p>Brush up on your ${data.trip.lang} before you arrive.</p></div><div class="prep-actions"><button class="prep-btn" data-action="vocab"><span class="prep-emoji">✦</span><b>Review vocab</b><small>Read through what you've collected</small></button><button class="prep-btn" data-action="quiz"><span class="prep-emoji">${icon('spark')}</span><b>Quiz yourself</b><small>Test your recall</small></button></div><button class="prep-new-trip" data-action="newTrip">+ Prep your lingo for your next trip</button></section>` : ''}
  <div class="section-heading"><div><p class="eyebrow">A GENTLE REFRESH</p><h2>Say hello again</h2></div><button data-action="vocab">See all ${icon('arrow')}</button></div>
  ${reviewCard}
  ${recentTrail}
@@ -856,30 +856,91 @@ function flashcards() {
     <div class="flashcards-head">
       <p class="eyebrow">PREPARE FOR ${data.trip.lang.toUpperCase()}</p>
       <h1>Little ${section.section.toLowerCase()} phrases</h1>
-      <p class="flashcards-progress">${absoluteIdx} of ${totalCards} · tap to reveal</p>
+      <p class="flashcards-progress"><span data-fc-progress>${absoluteIdx} of ${totalCards}</span> · tap to reveal</p>
     </div>
     <div class="flashcards-tabs">${sets.map((s, i) => `<button class="${i === sIdx ? 'selected' : ''}" data-action="flashcardSection" data-section-idx="${i}">${s.section}</button>`).join('')}</div>
     <div class="flashcard-scene">
       <div class="flashcard ${flipped ? 'is-flipped' : ''}" data-action="flashcardFlip">
         <div class="flashcard-face flashcard-front">
-          <span class="fc-eyebrow">${section.section}</span>
-          <b class="fc-front-text">${card.front}</b>
+          <span class="fc-eyebrow" data-fc-section>${section.section}</span>
+          <b class="fc-front-text" data-fc-front>${card.front}</b>
+          <span class="fc-reading" data-fc-reading>${card.reading || ''}</span>
+          <button class="fc-speak" data-action="speakCard" aria-label="Hear pronunciation" type="button"><span aria-hidden="true">🔊</span></button>
         </div>
         <div class="flashcard-face flashcard-back">
-          <span class="fc-eyebrow">${card.reading || '\u00a0'}</span>
-          <b class="fc-back-text">${card.back}</b>
+          <span class="fc-eyebrow" data-fc-reading-back>${card.reading || '\u00a0'}</span>
+          <b class="fc-back-text" data-fc-back>${card.back}</b>
           <small class="fc-tap-hint">tap to flip back</small>
         </div>
       </div>
     </div>
     <div class="flashcards-controls">
-      <button class="flashcard-nav" data-action="flashcardPrev" ${sIdx === 0 && cIdx === 0 ? 'disabled' : ''}>← Previous</button>
-      <span class="flashcard-counter">${cIdx + 1} / ${section.cards.length}</span>
-      <button class="flashcard-nav" data-action="flashcardNext">${absoluteIdx === totalCards ? 'Save to phrasebook' : 'Next →'}</button>
+      <button class="flashcard-nav" data-action="flashcardPrev" data-fc-prev-btn ${sIdx === 0 && cIdx === 0 ? 'disabled' : ''}>← Previous</button>
+      <span class="flashcard-counter" data-fc-counter>${cIdx + 1} / ${section.cards.length}</span>
+      <button class="flashcard-nav" data-action="flashcardNext" data-fc-next-btn>${absoluteIdx === totalCards ? 'Save to phrasebook' : 'Next →'}</button>
     </div>
     <button class="text-scan-again" data-action="skipPrep">Skip for now — go to scanning</button>
   </section>`, '');
 }
+
+// Update the dynamic text in the flashcard screen in place — no full
+// re-render — so the CSS flip animation stays smooth. Called by the
+// flashcardSection / flashcardPrev / flashcardNext handlers when the user
+// navigates between cards.
+function updateFlashcardDOM() {
+  const sets = getFlashcardsForLang(data.trip.langCode);
+  const sIdx = Math.min(state.flashcards.sectionIdx, sets.length - 1);
+  const section = sets[sIdx];
+  const cIdx = Math.min(state.flashcards.cardIdx, section.cards.length - 1);
+  const card = section.cards[cIdx];
+  const totalCards = sets.reduce((sum, s) => sum + s.cards.length, 0);
+  let absoluteIdx = 0;
+  for (let i = 0; i < sIdx; i++) absoluteIdx += sets[i].cards.length;
+  absoluteIdx += cIdx + 1;
+  const cardEl = document.querySelector('.flashcard');
+  if (cardEl) cardEl.classList.toggle('is-flipped', state.flashcards.flipped);
+  const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+  set('[data-fc-progress]', `${absoluteIdx} of ${totalCards}`);
+  set('[data-fc-section]', section.section);
+  set('[data-fc-front]', card.front);
+  set('[data-fc-reading]', card.reading || '');
+  set('[data-fc-reading-back]', card.reading || '\u00a0');
+  set('[data-fc-back]', card.back);
+  set('[data-fc-counter]', `${cIdx + 1} / ${section.cards.length}`);
+  // Tabs: toggle 'selected' on the matching tab
+  document.querySelectorAll('.flashcards-tabs button').forEach((btn, i) => {
+    btn.classList.toggle('selected', i === sIdx);
+  });
+  // Prev button disabled state
+  const prevBtn = document.querySelector('[data-fc-prev-btn]');
+  if (prevBtn) prevBtn.toggleAttribute('disabled', sIdx === 0 && cIdx === 0);
+  // Next button label changes on the last card
+  const nextBtn = document.querySelector('[data-fc-next-btn]');
+  if (nextBtn) nextBtn.textContent = absoluteIdx === totalCards ? 'Save to phrasebook' : 'Next →';
+}
+
+// Play the current card's foreign text aloud using the Web Speech API.
+// Falls back silently if speechSynthesis isn't available.
+function speakCard() {
+  const sets = getFlashcardsForLang(data.trip.langCode);
+  const sIdx = Math.min(state.flashcards.sectionIdx, sets.length - 1);
+  const section = sets[sIdx];
+  const cIdx = Math.min(state.flashcards.cardIdx, section.cards.length - 1);
+  const card = section.cards[cIdx];
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(card.front);
+  u.lang = BCP47[data.trip.langCode] || 'en-US';
+  u.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// BCP-47 language tags for the languages with full flashcard sets. Falls back
+// to a best-effort tag if the user's language isn't listed.
+const BCP47 = {
+  ja: 'ja-JP', fr: 'fr-FR', it: 'it-IT', es: 'es-ES', ko: 'ko-KR', de: 'de-DE',
+  pt: 'pt-PT', zh: 'zh-CN', th: 'th-TH',
+};
 
 function trip() {
   const pastTrips = loadPastTrips().filter(t => t.place !== data.trip.place);
@@ -893,7 +954,7 @@ function trip() {
            <span class="pt-arrow">${icon('arrow')}</span>
          </button>`).join('')}</div>`
     : `<div class="return-card"><span>✦</span><div><p class="eyebrow">YOUR PHRASEBOOKS</p><h2>Past trips will gather here.</h2><p>Scan a few words on this trip and it'll be saved as a little notebook for next time.</p></div></div>`;
-  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div><button class="primary full yellow new-trip-btn" data-action="newTrip">${icon('spark')} Prepare a new trip <span>→</span></button>${pastList}</section>`, 'trip'); }
+  return shell(`<section class="page trip-page"><div class="trip-hero"><span>${data.trip.flag}</span><p class="eyebrow">CURRENT CHAPTER</p><h1>${data.trip.name}</h1><p>${data.trip.dates} · ${data.trip.place}</p><button data-action="setup">Edit trip</button></div><div class="trip-stats"><div><strong>${data.vocab.length}</strong><span>words<br>collected</span></div><div><strong>${pastTrips.length}</strong><span>past<br>trips</span></div><div><strong>${Math.min(100, 20 + data.vocab.length * 5)}%</strong><span>recall<br>rate</span></div></div><button class="primary full yellow new-trip-btn" data-action="startOver">${icon('spark')} Start a new trip <span>→</span></button>${pastList}</section>`, 'trip'); }
 
 function quiz() {
  // Build quiz questions from saved vocab; fall back to starter set if empty
@@ -959,6 +1020,10 @@ app.addEventListener('click', e => {
   const a = target.dataset.action;
   // Save current trip as past, then start fresh
   if (a === 'newTrip') { saveCurrentTrip(); data.vocab = []; state.quiz = null; state.screen = 'setup'; render(); return; }
+  // "Start a new trip" from the trip page: archive the current trip, clear
+  // active vocab, and route all the way back to the welcome screen so the
+  // user picks whether to begin a fresh trip or prep their lingo again.
+  if (a === 'startOver') { saveCurrentTrip(); data.vocab = []; state.quiz = null; state.preparing = false; state.screen = 'welcome'; render(); return; }
   // Play the Phrasebook-opening animation before showing the vocab page
   if (a === 'vocab') { openLexicon(); return; }
   if (a === 'welcome'||a==='setup'||a==='modeChoice'||a==='home'||a==='scan'||a==='result'||a==='vocab'||a==='trip'||a==='quiz') state.screen=a;
@@ -1009,8 +1074,17 @@ app.addEventListener('click', e => {
   }
   if (a==='saved') { target.innerHTML='✓'; target.classList.add('is-saved'); }
   // === Trip preparation (flashcards + new trip) ===
+  // Flashcard navigation (flip / prev / next / tab) does in-place DOM updates
+  // instead of full re-renders so the CSS flip animation stays smooth.
+  let useInPlaceFlashcardUpdate = false;
   if (a === 'prepareTrip') { state.preparing = true; state.screen = 'setup'; }
-  if (a === 'flashcardFlip') { state.flashcards.flipped = !state.flashcards.flipped; }
+  if (a === 'speakCard') { speakCard(); return; }
+  if (a === 'flashcardFlip') {
+    state.flashcards.flipped = !state.flashcards.flipped;
+    const cardEl = document.querySelector('.flashcard');
+    if (cardEl) cardEl.classList.toggle('is-flipped', state.flashcards.flipped);
+    return;
+  }
   if (a === 'flashcardNext') {
     const sets = getFlashcardsForLang(data.trip.langCode);
     const sIdx = Math.min(state.flashcards.sectionIdx, sets.length - 1);
@@ -1029,6 +1103,7 @@ app.addEventListener('click', e => {
       saveFlashcardsToVocab();
       state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice';
     }
+    useInPlaceFlashcardUpdate = true;
   }
   if (a === 'flashcardPrev') {
     if (state.flashcards.cardIdx > 0) {
@@ -1040,11 +1115,24 @@ app.addEventListener('click', e => {
       state.flashcards.cardIdx = prevSet.cards.length - 1;
       state.flashcards.flipped = false;
     }
+    useInPlaceFlashcardUpdate = true;
   }
   if (a === 'flashcardSection') {
     state.flashcards.sectionIdx = parseInt(target.dataset.sectionIdx, 10);
     state.flashcards.cardIdx = 0;
     state.flashcards.flipped = false;
+    useInPlaceFlashcardUpdate = true;
+  }
+  if (useInPlaceFlashcardUpdate) {
+    // Animate the new card content fading in (handled by CSS transition on
+    // opacity + transform on the inner faces, see .flashcard-fade-in class).
+    const cardEl = document.querySelector('.flashcard');
+    if (cardEl) {
+      cardEl.classList.add('is-swapping');
+      updateFlashcardDOM();
+      setTimeout(() => cardEl.classList.remove('is-swapping'), 30);
+    }
+    return;
   }
   if (a === 'skipPrep') { state.screen = findMatchingLangTrip(data.trip.langCode) ? 'memory' : 'modeChoice'; }
   render();
@@ -1077,26 +1165,55 @@ function saveFlashcardsToVocab() {
   saveProgress();
 }
 
-// Plays the animated Phrasebook-opening transition (bottom-to-top), then shows vocab.
+// Simple phrasebook transition: render the vocab page, then fade in a
+// static illustration of an open notebook on top, hold briefly, fade out.
 function openLexicon() {
-  // Render the vocab page underneath first, so the overlay can fade out onto it.
   state.screen = 'vocab';
   render();
   const overlay = document.createElement('div');
   overlay.className = 'lexicon-transition';
-  overlay.innerHTML = `<div class="lexicon-book">
-    <div class="lexicon-pages-reveal"><i></i><i></i><i></i><i></i></div>
-    <div class="lexicon-cover-bottom">
-      <span class="lc-icon">✦</span>
-      <span class="lc-title">Phrasebook</span>
-      <span class="lc-sub">${data.trip.name.toUpperCase()}</span>
-    </div>
-    <div class="lexicon-hinge"></div>
+  overlay.innerHTML = `<div class="lexicon-static">
+    <svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg" aria-label="Open notebook lying flat">
+      <!-- Closed-cover edges (yellow) framing the open spread -->
+      <rect x="6" y="6" width="348" height="208" rx="10" fill="#f6dd98" stroke="#dcc279" stroke-width="2"/>
+      <!-- Left page (cream) with rounded-left outer corner -->
+      <rect x="14" y="14" width="166" height="192" rx="6" fill="#fffdf7" stroke="#f0e6cc" stroke-width="1"/>
+      <!-- Right page (cream) with rounded-right outer corner -->
+      <rect x="180" y="14" width="166" height="192" rx="6" fill="#fffdf7" stroke="#f0e6cc" stroke-width="1"/>
+      <!-- Spine shadow down the centre -->
+      <line x1="180" y1="14" x2="180" y2="206" stroke="#e6dcc5" stroke-width="1.5"/>
+      <!-- Left page: red left margin + horizontal ruled lines -->
+      <line x1="40" y1="14" x2="40" y2="206" stroke="#e89b9b" stroke-width="1.5" opacity="0.85"/>
+      <g stroke="#b6c8d4" stroke-width="1" opacity="0.9">
+        <line x1="50" y1="38" x2="172" y2="38"/>
+        <line x1="50" y1="56" x2="156" y2="56"/>
+        <line x1="50" y1="74" x2="170" y2="74"/>
+        <line x1="50" y1="92" x2="148" y2="92"/>
+        <line x1="50" y1="110" x2="166" y2="110"/>
+        <line x1="50" y1="128" x2="150" y2="128"/>
+        <line x1="50" y1="146" x2="168" y2="146"/>
+      </g>
+      <!-- Left page: folded corner (bottom-left) -->
+      <path d="M14 206 L14 184 L36 206 Z" fill="#ece0c0"/>
+      <line x1="14" y1="184" x2="36" y2="206" stroke="#b89a6a" stroke-width="0.8"/>
+      <!-- Right page: red left margin + horizontal ruled lines -->
+      <line x1="206" y1="14" x2="206" y2="206" stroke="#e89b9b" stroke-width="1.5" opacity="0.85"/>
+      <g stroke="#b6c8d4" stroke-width="1" opacity="0.9">
+        <line x1="216" y1="38" x2="338" y2="38"/>
+        <line x1="216" y1="56" x2="322" y2="56"/>
+        <line x1="216" y1="74" x2="336" y2="74"/>
+        <line x1="216" y1="92" x2="314" y2="92"/>
+        <line x1="216" y1="110" x2="332" y2="110"/>
+        <line x1="216" y1="128" x2="316" y2="128"/>
+        <line x1="216" y1="146" x2="334" y2="146"/>
+      </g>
+    </svg>
+    <p class="lexicon-static-caption">YOUR PHRASEBOOK</p>
   </div>`;
   document.body.appendChild(overlay);
   // Fade the overlay away into the vocab page (smooth, no hard cut).
-  setTimeout(() => overlay.classList.add('lexicon-exit'), 1180);
-  setTimeout(() => { overlay.remove(); }, 1630);
+  setTimeout(() => overlay.classList.add('lexicon-exit'), 750);
+  setTimeout(() => { overlay.remove(); }, 1200);
 }
 app.addEventListener('input', e => { if(e.target.dataset.input==='query') { state.query=e.target.value; render(); const input=document.querySelector('[data-input="query"]'); input?.focus(); input?.setSelectionRange(state.query.length,state.query.length); } });
 render();
