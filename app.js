@@ -519,7 +519,19 @@ function dashboard() {
  const streak = Math.max(1, Math.min(wordCount + 1, 30));
  // Pick the most-seen word for the review card, or hide if no vocab
  const reviewWord = data.vocab.length > 0 ? [...data.vocab].sort((a,b) => (b.seen||1) - (a.seen||1))[0] : null;
- const reviewCard = reviewWord ? `<div class="review-card"><div class="review-word"><span>${reviewWord.word}</span><small>${reviewWord.reading || ''}</small></div><div class="review-copy"><b>You've met this one before</b><p>at ${reviewWord.place || data.trip.place.split(',')[0]} · ${reviewWord.seen || 1} times</p><div class="mini-progress"><i style="width:${Math.min(100, (reviewWord.level || 15))}%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>` : `<div class="review-card"><div class="review-word"><span>✦</span><small>start</small></div><div class="review-copy"><b>No words yet</b><p>Scan a sign or menu to start your collection</p></div><button class="round-btn" data-action="scan">${icon('arrow')}</button></div>`;
+ // Pick a font-size for the review chip's word so it always fits inside the
+  // yellow box regardless of word length. Short words stay bold and large;
+  // long words shrink. The chip also has overflow:hidden as a hard cap.
+  const reviewWordFontSize = (w) => {
+    const n = (w || '').length;
+    if (n <= 2) return 20;
+    if (n === 3) return 18;
+    if (n === 4) return 16;
+    if (n === 5) return 14;
+    if (n === 6) return 13;
+    return 11; // 7+ chars
+  };
+  const reviewCard = reviewWord ? `<div class="review-card"><div class="review-word"><span style="font-size:${reviewWordFontSize(reviewWord.word)}px">${reviewWord.word}</span><small>${reviewWord.reading || ''}</small></div><div class="review-copy"><b>You've met this one before</b><p>at ${reviewWord.place || data.trip.place.split(',')[0]} · ${reviewWord.seen || 1} times</p><div class="mini-progress"><i style="width:${Math.min(100, (reviewWord.level || 15))}%"></i></div></div><button class="round-btn" data-action="quiz">${icon('arrow')}</button></div>` : `<div class="review-card"><div class="review-word"><span>✦</span><small>start</small></div><div class="review-copy"><b>No words yet</b><p>Scan a sign or menu to start your collection</p></div><button class="round-btn" data-action="scan">${icon('arrow')}</button></div>`;
  // Recent trail: show the most recent words scanned, or empty state
  const recentTrail = data.vocab.length > 0 ? `<div class="section-heading recent"><div><p class="eyebrow">YOUR RECENT TRAIL</p><h2>Small discoveries</h2></div></div>
  ${data.vocab.slice(0, 3).map(v => `<div class="trail"><div class="trail-photo market">${v.word.slice(0, 3)}</div><div><b>${v.meaning || v.word}</b><p>at ${v.place || data.trip.place.split(',')[0]}</p></div><span>${v.category || 'Signs'}</span></div>`).join('')}` : '';
