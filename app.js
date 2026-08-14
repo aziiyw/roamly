@@ -324,8 +324,13 @@ function parseGLMJson(content) {
   if (!content || typeof content !== 'string') {
     throw new Error('The AI returned an empty response. Please try another photo.');
   }
+  // 0. Strip Qwen-style chain-of-thought blocks ("<think>...</think>" or
+  //    unclosed "<think>" through end of string). These are reasoning traces
+  //    that can contain their own { } examples and confuse the brace-slicing
+  //    logic below. Stripped first so we only parse the model's actual output.
+  let text = content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim();
   // 1. Strip ```json fences and extract the outermost { ... } block
-  let text = content.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+  text = text.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
